@@ -38,7 +38,7 @@ export default function Auth({ onLoginSuccess }) {
         
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '14px', marginBottom: '8px' }}>ชื่อผู้ใช้งาน / อีเมล</label>
+            <label style={{ display: 'block', fontSize: '14px', marginBottom: '8px' }}>ชื่อผู้ใช้ (Username)</label>
             <input 
               type="text" 
               value={username} 
@@ -51,7 +51,7 @@ export default function Auth({ onLoginSuccess }) {
           {/* ซ่อนช่องรหัสผ่านเมื่ออยู่ในหน้าลืมรหัสผ่าน */}
           {!isForgotPassword && (
             <div>
-              <label style={{ display: 'block', fontSize: '14px', marginBottom: '8px' }}>รหัสผ่าน</label>
+              <label style={{ display: 'block', fontSize: '14px', marginBottom: '8px' }}>รหัสผ่าน (Password)</label>
               <input type="password" required style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }} />
               
               {/* ปุ่มลืมรหัสผ่าน (แสดงเฉพาะตอนหน้าล็อกอิน) */}
