@@ -1,0 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Kanit;
+}
+
+/* ##############[ Background Color ]############## */
+.bg-color-primary {
+  background-color: #B00000;
+}
+.bg-color-secondary {
+  background-color: #FAFAFA;
+}
+.bg-color-accent {
+  background-color: #FFD129;
+}
+
+/* ##############[ Text Color ]############## */
+.text-color-primary {
+  color: #B00000;
+}
+.text-color-secondary {
+  color: #FAFAFA;
+}
+.text-color-accent {
+  color: #FFD129;
+}
+
+/* ##############[ Border Radius ]############## */
+.br-primary {
+  border-radius: 8px;
+}
+.br-modal {
+  border-radius: 14px;
+}
+
+/* ##############[ Text Head ]############## */
+h1 {
+  font-size: 36px;
+  font-weight: bold;
+}
+h2 {
+  font-size: 24px;
+  font-weight:bold
+}
+h3 {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* ##############[ Text Body ]############## */
+.b1 {
+  font-size: 16px;
+  font-weight: normal;
+}
+.b2 {
+  font-size: 14px;
+  font-weight: normal;
+}
+.b3 {
+  font-size: 12px;
+  font-weight: normal;
+}
