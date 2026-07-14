@@ -1,16 +1,25 @@
+import { Route, Routes } from 'react-router-dom'
+
+// ######### assets #########
 import './App.css'
+
+// ######### Layout #########
+import GuestLayout from './layout/GuestLayout'
+import UserLayout from './layout/UserLayout'
+import AdminLayout from './layout/AdminLayout'
+import ManagerLayout from './layout/ManagerLayout'
+import PageNotFound from './layout/PageNotFound'
 
 function App() {
   return (
     <>
-      <div>
-        <h1>Hello World</h1>
-        <h2>Hello World</h2>
-        <h3>Hello World</h3>
-        <p className='b1'>Hello World</p>
-        <p className='b2'>Hello World</p>
-        <p className='b3'>Hello World</p>
-      </div>
+      <Routes>
+        <Route path='/' element={<GuestLayout />} />
+        <Route path='/user' element={<UserLayout />} />
+        <Route path='/admin/*' element={<AdminLayout />} />
+        <Route path='/manager/*' element={<ManagerLayout />} />
+        <Route path='*' element={<PageNotFound />} />
+      </Routes>
     </>
   )
 }
