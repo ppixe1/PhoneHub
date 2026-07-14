@@ -20,7 +20,7 @@ router.post('/register', (req, res) => {
     [username],
     (err, result) => {
       if (err) return res.status(500).json({ msg: 'Server Error' });
-      if (result.length > 0) return res.status(400).json({ msg: 'Username already exists' });
+      if (result.length > 0) return res.status(400).json({ msg: 'มีคนใช้ชื่อนี้ในระบบแล้ว' });
       
       const salt = bcrypt.genSaltSync(10);
       const passwordHash = bcrypt.hashSync(password, salt);
@@ -50,11 +50,56 @@ router.post('/register', (req, res) => {
           { expiresIn: '8h' }
         )
 
-        res.status(200).json({ msg: 'User registered successfully', token });
+        res.status(200).json({ msg: 'สมัครสมาชิกสําเร็จ!', token });
       })
     }
   )
 })
+
+
+
+// Login
+router.post('/login', (req, res) => {
+  const { username, password } = req.body;
+
+  if (!username || !password) return res.status(400).json({ msg: 'กรุณากรอกชื่อผู้ใช้และรหัสผ่านให้ครบถ้วน' });
+
+  db.query('SELECT * FROM users WHERE username = ?',
+  [username],
+  (err, result) => {
+    if (err) return res.status(500).json({ msg: 'Server Error' });
+    if (result.length === 0) return res.status(400).json({ msg: 'ชื่อผู้ใช้ไม่ถูกต้อง' });
+
+    const isMatch = bcrypt.compareSync(password, result[0].password);
+    if (!isMatch) return res.status(400).json({ msg: 'รหัสผ่านไม่ถูกต้อง' });
+
+    const token = jwt.sign(
+      { user_id : result[0].id, role: result[0].role, username: result[0].username, name: result[0].name },
+      secret_key,
+      { expiresIn: '8h' }
+    )
+
+    res.status(200).json({ msg: 'เข้าสู่ระบบสําเร็จ!', token });
+  })
+})
+
+
+
+// Get User Data from Token
+router.get('/me/:token', (req, res) => {
+  const token = req.params.token;
+  const decoded = jwt.verify(token, secret_key);
+
+  const user = {
+    id: decoded.user_id,
+    role: decoded.role,
+    username: decoded.username,
+    name: decoded.name
+  }
+
+  res.status(200).json({ user });
+})
+
 
 
 module.exports = router;
