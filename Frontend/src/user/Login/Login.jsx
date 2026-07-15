@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
@@ -9,7 +9,7 @@ const theme = {
   fontFamily: "'Kanit', sans-serif"
 };
 
-export default function Auth({ onLoginSuccess }) {
+export default function Auth() {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -31,7 +31,7 @@ export default function Auth({ onLoginSuccess }) {
       alert(`สมัครสมาชิกสำเร็จ!\nUsername: ${registerUsername}\nชื่อ: ${fullName}\nอีเมล: ${email}\nเบอร์โทร: ${phone}`);
       setIsLogin(true); 
     } else if (username.trim()) {
-      onLoginSuccess({ name: username, id: 'USER-007' });
+      // onLoginSuccess({ name: username, id: 'USER-007' });
     }
   };
 
@@ -78,6 +78,10 @@ export default function Auth({ onLoginSuccess }) {
       }
     }
   }
+
+  useEffect(() => {
+    sessionStorage.removeItem('token');
+  }, [])
 
   return (
     <div style={{ fontFamily: theme.fontFamily, backgroundColor: theme.background, minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>

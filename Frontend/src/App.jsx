@@ -7,7 +7,10 @@ import './App.css'
 import GuestLayout from './layout/GuestLayout'
 import HomeLayout from './layout/HomeLayout'
 import PageNotFound from './layout/PageNotFound'
+
+// ######### Pages #########
 import Login from './user/Login/Login'
+import Cart from './user/Cart/Cart'
 
 function App() {
   return (
@@ -16,6 +19,7 @@ function App() {
         <Route path='/' element={<GuestLayout />} />
         <Route path='/home' element={<HomeLayout />} />
         <Route path='/login' element={<Login />} />
+        <Route path='/home/cart' element={<Cart />} />
         <Route path='*' element={<PageNotFound />} />
       </Routes>
     </>

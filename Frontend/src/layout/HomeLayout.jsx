@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
 // LAYOUT
@@ -7,6 +8,7 @@ import AdminLayout from '../layout/AdminLayout'
 import ManagerLayout from '../layout/ManagerLayout'
 
 const HomeLayout = () => {
+  const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [role, setRole] = useState('');
   const [userId, setUserId] = useState('');
@@ -29,12 +31,11 @@ const HomeLayout = () => {
   }
 
   useEffect(() => {
+    if (!sessionStorage.getItem('token')) {
+      navigate('/login')
+    }
     getUserData()
   }, [])
-  
-  useEffect(() => {
-    console.log(username, role, userId, name)
-  }, [username, role, userId, name])
 
   return ( 
   <>
