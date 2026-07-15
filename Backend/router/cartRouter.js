@@ -1,0 +1,59 @@
+const express = require('express');
+const router = express.Router();
+const db = require('../db.js');
+const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv');
+
+dotenv.config();
+
+const secret_key = process.env.SECRET_KEY;
+
+
+// Get product in cart by UserID
+router.get('/', (req, res) => {
+  const token = req.headers.authorization.split(' ')[1];
+
+  if (!token) return res.status(400).json({ msg: 'เกิดข้อผิดพลาด กรุณาเข้าสู่ระบบใหม่อีกครั้ง' });
+
+  const data = jwt.verify(token, secret_key);
+  const user_id = data.user_id
+
+  db.query('SELECT * FROM cartitems WHERE user_id = ?', [user_id], (err, result) => {
+    if (err) return res.status(500).json({ msg: 'Server Error' });
+    res.status(200).json(result);
+  })
+})
+
+
+// Add product into Cart
+router.post('/', (req, res) => {
+  const token = req.headers.authorization.split(' ')[1];
+
+  console.log(token);
+
+  if (!token) return res.status(400).json({ msg: 'เกิดข้อผิดพลาด กรุณาเข้าสู่ระบบใหม่อีกครั้ง' });
+
+  const data = jwt.verify(token, secret_key);
+  const user_id = data.user_id
+  const {
+    product_id,
+    quantity,
+    color,
+    storage,
+    price
+  } = req.body;
+
+  if (!product_id || !quantity || !color || !storage) return res.status(400).json({ msg: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
+
+  db.query('INSERT INTO cartitems (user_id, product_id, quantity, color, storage) VALUES (?, ?, ?, ?, ?)',
+  [user_id, product_id, quantity, color, storage],
+  (err, result) => {
+    if (err) return res.status(500).json({ msg: 'Server Error' });
+    res.status(200).json({ msg: 'เพิ่มสินค้าสําเร็จ!', result });
+  })
+})
+
+
+
+
+module.exports = router;

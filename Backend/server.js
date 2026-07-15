@@ -5,6 +5,7 @@ const cors = require('cors');
 
 const authRouter = require('./router/authRouter.js');
 const productRouter = require('./router/productRouter.js');
+const cartRouter = require('./router/cartRouter.js');
 
 
 app.use(cors({ credentials: true, origin: 'http://localhost:5173' }));
@@ -13,6 +14,7 @@ app.use(express.json());
 
 app.use('/auth', authRouter);
 app.use('/product', productRouter);
+app.use('/cart', cartRouter);
 
 
 app.listen(3000, () => {

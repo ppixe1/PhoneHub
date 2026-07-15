@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { jwtDecode } from 'jwt-decode';
 
 // LAYOUT
 import UserLayout from '../layout/UserLayout'
@@ -19,11 +20,12 @@ const HomeLayout = () => {
       const token = sessionStorage.getItem('token');
       if (!token) return alert('คุณไม่มี Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง')
 
-      const res = await axios.get(`http://localhost:3000/auth/me/${token}`)
-      setUsername(res.data.user.username)
-      setRole(res.data.user.role)
-      setUserId(res.data.user.id)
-      setName(res.data.user.name)
+      const data = jwtDecode(token)
+      
+      setUsername(data.username)
+      setRole(data.role)
+      setUserId(data.user_id)
+      setName(data.name)
     }
     catch (error) {
       console.error('Error getting user data:', error)

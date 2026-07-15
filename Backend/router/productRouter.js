@@ -18,23 +18,6 @@ router.get('/', (req, res) => {
 
 
 
-// Get product in cart by UserID
-router.get('/', (req, res) => {
-  const token = req.headers.authorization;
-
-  if (!token) return res.status(400).json({ msg: 'เกิดข้อผิดพลาด กรุณาเข้าสู่ระบบใหม่อีกครั้ง' });
-
-  const data = jwt.verify(token, secret_key);
-  const user_id = data.user_id
-
-  db.query('SELECT * FROM cartitems WHERE id = ?', [user_id], (err, result) => {
-    if (err) return res.status(500).json({ msg: 'Server Error' });
-    res.status(200).json(result);
-  })
-})
-
-
-
 // crate product
 router.post('/', (req, res) => {
   const {

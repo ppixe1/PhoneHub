@@ -19,7 +19,7 @@ function App() {
         <Route path='/' element={<GuestLayout />} />
         <Route path='/home' element={<HomeLayout />} />
         <Route path='/login' element={<Login />} />
-        <Route path='/home/cart' element={<Cart />} />
+        <Route path='/cart' element={<Cart />} />
         <Route path='*' element={<PageNotFound />} />
       </Routes>
     </>

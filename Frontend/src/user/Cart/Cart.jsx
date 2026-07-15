@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const theme = {
   primary: '#B00000',
@@ -7,17 +9,112 @@ const theme = {
   fontFamily: "'Kanit', sans-serif"
 };
 
-// เพิ่มพรอพ onBack เข้ามาสำหรับปุ่มย้อนกลับ
 export default function Cart() {
-  const [cartItem, setCartItem] = useState([]);
+  // ---------------------------------------------------------------------------
+  // 1. STATES (จัดการข้อมูลในหน้าจอ)
+  // ---------------------------------------------------------------------------
+  const [cartItems, setCartItems] = useState([]); // รายการสินค้าทั้งหมดในตะกร้า
+  const [selectedItems, setSelectedItems] = useState([]); // เก็บ ID ของสินค้าที่ถูกติ๊กเลือก
+  const [isLoading, setIsLoading] = useState(true); // สถานะรอโหลดข้อมูลจาก API
 
+  const navigate = useNavigate();
+
+  // ---------------------------------------------------------------------------
+  // 2. COMPUTED VALUES (ตัวแปรคำนวณอัตโนมัติจาก State)
+  // ---------------------------------------------------------------------------
+  const hasCartItems = cartItems.length > 0;
+  const hasSelectedItems = selectedItems.length > 0;
   
+  // กรองเฉพาะสินค้าที่ถูกติ๊กเลือก
+  const selectedCartItems = cartItems.filter(item => selectedItems.includes(item.id));
+  
+  // คำนวณยอดรวม (ราคา * จำนวน) เฉพาะสินค้าที่ถูกเลือก
+  const totalAmount = selectedCartItems.reduce(
+    (sum, item) => sum + (item.price * item.quantity), 
+    0
+  );
 
+  // ---------------------------------------------------------------------------
+  // 3. API FUNCTIONS (ฟังก์ชันเตรียมพร้อมต่อ API)
+  // ---------------------------------------------------------------------------
+  
+  // ดึงข้อมูลตะกร้าสินค้าตอนเปิดหน้านี้ครั้งแรก
+  useEffect(() => {
+    const fetchCartData = async () => {
+      setIsLoading(true);
+      try {
+        // [API TODO: 1] ยิง API GET เพื่อดึงข้อมูลสินค้าในตะกร้าของ User ตรงนี้
+        // const response = await axios.get('/api/cart');
+        // setCartItems(response.data);
+        const res = await axios.get('http://localhost:3000/cart', {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem('token')}`
+          }
+        });
+        setCartItems(res.data);
+      } catch (error) {
+        console.error("Failed to fetch cart:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCartData();
+  }, []);
+
+  // ฟังก์ชันติ๊กเลือก/เลิกเลือก สินค้า
+  const handleToggleItem = (id) => {
+    setSelectedItems(prev =>
+      prev.includes(id) 
+        ? prev.filter(itemId => itemId !== id) // ถ้ามีอยู่แล้วให้เอาออก
+        : [...prev, id] // ถ้ายังไม่มีให้เพิ่มเข้าไป
+    );
+  };
+
+  // ฟังก์ชันเพิ่ม/ลดจำนวนสินค้า
+  const onUpdateQuantity = async (id, newQuantity) => {
+    if (newQuantity < 1) return; // ป้องกันไม่ให้ลดจำนวนต่ำกว่า 1
+    
+    // [API TODO: 2] ยิง API PUT/PATCH เพื่ออัปเดตจำนวนสินค้าบน Database ตรงนี้
+    // await axios.patch(`/api/cart/${id}`, { quantity: newQuantity });
+
+    // อัปเดต UI ทันทีไม่ต้องรอโหลดใหม่ (Optimistic UI Update)
+    setCartItems(prev =>
+      prev.map(item => item.id === id ? { ...item, quantity: newQuantity } : item)
+    );
+  };
+
+  // ฟังก์ชันลบสินค้าออกจากตะกร้า
+  const onRemove = async (id) => {
+    // [API TODO: 3] ยิง API DELETE เพื่อลบสินค้าออกจาก Database ตรงนี้
+    // await axios.delete(`/api/cart/${id}`);
+
+    // อัปเดต UI
+    setCartItems(prev => prev.filter(item => item.id !== id));
+    setSelectedItems(prev => prev.filter(itemId => itemId !== id)); // ลบออกจากรายการที่เลือกด้วย
+  };
+
+  // ฟังก์ชันกดชำระเงิน
+  const onNextStep = async () => {
+    // [API TODO: 4] ส่งข้อมูล selectedItems หรือ selectedCartItems ไปให้ฝั่ง API สร้าง Order ตรงนี้
+    console.log("Proceeding to checkout with items:", selectedCartItems);
+    console.log("Total Amount:", totalAmount);
+    
+    // สำเร็จแล้วให้เปลี่ยนหน้าไปชำระเงิน
+    // navigate('/checkout');
+  };
+
+  const onBack = () => {
+    navigate('/home');
+  };
+
+  // ---------------------------------------------------------------------------
+  // 4. RENDER UI
+  // ---------------------------------------------------------------------------
   return (
     <div style={{ fontFamily: theme.fontFamily, backgroundColor: theme.background, minHeight: '100vh' }}>
       {/* Header พร้อมไอคอนย้อนกลับ */}
       <div style={{ backgroundColor: theme.primary, color: '#fff', padding: '15px 5%', display: 'flex', alignItems: 'center', gap: '15px' }}>
-        {/* ไอคอนย้อนกลับ (ลูกศรซ้าย) */}
         <div 
           onClick={onBack} 
           style={{ 
@@ -42,7 +139,6 @@ export default function Cart() {
         </h1>
       </div>
 
-      {/* ปรับเป็น 2 คอลัมน์ "เมื่อมีการติ๊กเลือกสินค้า" เท่านั้น */}
       <div style={{ 
         padding: '40px 5%', 
         display: 'grid', 
@@ -51,7 +147,13 @@ export default function Cart() {
       }}>
         {/* รายการสินค้าฝั่งซ้าย */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', minHeight: '300px' }}>
-          {!hasCartItems ? (
+          
+          {/* จัดการสถานะกำลังโหลดข้อมูล */}
+          {isLoading ? (
+             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, height: '100%' }}>
+               <p style={{ fontSize: '18px', color: '#666', fontWeight: '500', fontFamily: theme.fontFamily }}>กำลังโหลด...</p>
+             </div>
+          ) : !hasCartItems ? (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, height: '100%' }}>
               <p style={{ fontSize: '18px', color: '#666', fontWeight: '500', fontFamily: theme.fontFamily }}>ไม่มีสินค้าในตะกร้า</p>
             </div>
@@ -59,7 +161,6 @@ export default function Cart() {
             cartItems.map(item => (
               <div key={item.id} style={{ backgroundColor: '#fff', border: '1px solid #ddd', padding: '15px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderRadius: '4px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                  {/* เพิ่ม Checkbox ฝั่งซ้ายสุด */}
                   <input 
                     type="checkbox" 
                     checked={selectedItems.includes(item.id)}
@@ -67,24 +168,24 @@ export default function Cart() {
                     style={{ 
                       width: '20px', 
                       height: '20px', 
-                      accentColor: theme.primary, // เปลี่ยนสี Checkbox เป็นสีแดงตอนที่ติ๊ก
+                      accentColor: theme.primary,
                       cursor: 'pointer' 
                     }} 
                   />
                   
                   <div style={{ width: '60px', height: '60px', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
-                    <img src={item.img} alt={item.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                    <img src={item.img} alt={item.model} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                   </div>
                   <div>
-                    <div style={{ fontSize: '14px', fontWeight: '600', fontFamily: theme.fontFamily }}>{item.name}</div>
+                    <div style={{ fontSize: '14px', fontWeight: '600', fontFamily: theme.fontFamily }}>{item.model}</div>
                     <div style={{ fontSize: '12px', color: theme.primary, fontFamily: theme.fontFamily }}>฿{item.price.toLocaleString()}</div>
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <button onClick={() => onUpdateQuantity(item.id, item.quantity - 1)} style={{ padding: '2px 8px', fontFamily: theme.fontFamily }}>-</button>
-                  <span style={{ fontSize: '14px', fontFamily: theme.fontFamily }}>{item.quantity}</span>
-                  <button onClick={() => onUpdateQuantity(item.id, item.quantity + 1)} style={{ padding: '2px 8px', fontFamily: theme.fontFamily }}>+</button>
-                  <button onClick={() => onRemove(item.id)} style={{ marginLeft: '15px', color: 'red', border: 'none', background: 'none', cursor: 'pointer', fontSize: '12px', fontFamily: theme.fontFamily }}>ลบ</button>
+                  <button className='btn btn-outline-secondary' onClick={() => onUpdateQuantity(item.product_id, item.quantity - 1)} style={{ padding: '2px 8px', fontFamily: theme.fontFamily, cursor: 'pointer' }}>-</button>
+                  <span style={{ fontSize: '14px', fontFamily: theme.fontFamily, width: '20px', textAlign: 'center' }}>{item.quantity}</span>
+                  <button className='btn btn-outline-secondary' onClick={() => onUpdateQuantity(item.product_id, item.quantity + 1)} style={{ padding: '2px 8px', fontFamily: theme.fontFamily, cursor: 'pointer' }}>+</button>
+                  <button  onClick={() => onRemove(item.product_id)} style={{ marginLeft: '15px', color: 'red', border: 'none', background: 'none', cursor: 'pointer', fontSize: '12px', fontFamily: theme.fontFamily }}>ลบ</button>
                 </div>
               </div>
             ))
@@ -96,15 +197,14 @@ export default function Cart() {
           <div style={{ backgroundColor: '#ffffff', border: '1px solid #ddd', padding: '20px', borderRadius: '4px', height: 'fit-content' }}>
             <h3 style={{ fontSize: '18px', fontWeight: '600', margin: '0 0 15px 0', borderBottom: '1px solid #eee', paddingBottom: '10px', fontFamily: theme.fontFamily }}>รายการยอดรวมสินค้า</h3>
             
-            {/* ส่วนแสดงรายชื่อและรูปสินค้าที่ถูกเลือก */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '15px', maxHeight: '200px', overflowY: 'auto' }}>
               {selectedCartItems.map(item => (
-                <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px' }}>
+                <div key={`summary-${item.product_id}`} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px' }}>
                   <div style={{ width: '40px', height: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center', border: '1px solid #eee', borderRadius: '4px', backgroundColor: '#fff', flexShrink: 0 }}>
-                    <img src={item.img} alt={item.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                    <img src={item.img} alt={item.model} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                   </div>
                   <div style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: theme.fontFamily }}>
-                    {item.name}
+                    {item.model}
                   </div>
                   <div style={{ color: '#666', flexShrink: 0, fontFamily: theme.fontFamily }}>
                     x{item.quantity}
@@ -126,7 +226,7 @@ export default function Cart() {
             <hr style={{ border: 'none', borderTop: '1px solid #ccc', margin: '15px 0' }} />
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: 'bold', marginBottom: '20px', fontFamily: theme.fontFamily }}>
               <span>ยอดรวมสุทธิ</span>
-              <span>฿{totalAmount.toLocaleString()}</span>
+              <span style={{ color: theme.primary }}>฿{totalAmount.toLocaleString()}</span>
             </div>
             <button 
               onClick={onNextStep}
