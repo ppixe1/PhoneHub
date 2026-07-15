@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { Bell } from 'lucide-react';
-import { initialNotifications } from '../data/mockData';
 
 export default function Navbar() {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-  const [notifications, setNotifications] = useState(initialNotifications);
+  // เปลี่ยนค่าเริ่มต้นของการแจ้งเตือนเป็น Array ว่างไปก่อนครับ
+  const [notifications, setNotifications] = useState([]);
   const notifRef = useRef(null);
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -31,7 +31,6 @@ export default function Navbar() {
             src="/PhoneHubLOGO.png"
             alt="PhoneHub Logo" 
             style={{ height: '35px', maxWidth: '100%', objectFit: 'contain', cursor: 'pointer', opacity: 1, transition: 'opacity 0.3s' }}
-            className=""
             onMouseEnter={(e) => e.target.style.opacity = '0.9'}
             onMouseLeave={(e) => e.target.style.opacity = '1'}
           />

@@ -1,8 +1,7 @@
 import axios from 'axios';
-import { dashboardDatabase, inventoryData, ordersData } from '../data/mockData';
 
+// ชี้ไปยัง URL ของ Backend (ถ้าไม่ได้ตั้งค่าไว้ จะใช้ /api เป็นค่าเริ่มต้น)
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
-const USE_MOCK = import.meta.env.VITE_USE_MOCK_API === 'false' ? false : true;
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -63,37 +62,23 @@ async function request(path, options = {}) {
   }
 }
 
-export async function getDashboardData(timeframe = 'today') {
-  if (USE_MOCK) {
-    return dashboardDatabase[timeframe] || dashboardDatabase.today;
-  }
+// ==========================================
+// ฟังก์ชันเรียก API ทั้งหมด (จะยิงไปหา Backend จริงๆ)
+// ==========================================
 
+export async function getDashboardData(timeframe = 'today') {
   return request(`/dashboard?timeframe=${encodeURIComponent(timeframe)}`);
 }
 
-export async function getInventoryProducts() {
-  if (USE_MOCK) {
-    return inventoryData;
-  }
-
+export async function getProducts() {
   return request('/products');
 }
 
 export async function getOrders() {
-  if (USE_MOCK) {
-    return ordersData;
-  }
-
   return request('/orders');
 }
 
 export async function updateOrderStatus(id, status) {
-  if (USE_MOCK) {
-    const order = ordersData.find((item) => item.id === id);
-    if (order) order.status = status;
-    return order;
-  }
-
   return request(`/orders/${encodeURIComponent(id)}/status`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -102,13 +87,6 @@ export async function updateOrderStatus(id, status) {
 }
 
 export async function createProduct(product) {
-  if (USE_MOCK) {
-    const nextId = String(Math.max(...inventoryData.map((item) => Number(item.id) || 0), 100) + 1);
-    const newProduct = { id: nextId, ...product };
-    inventoryData.push(newProduct);
-    return newProduct;
-  }
-
   return request('/products', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -117,13 +95,6 @@ export async function createProduct(product) {
 }
 
 export async function updateProduct(id, product) {
-  if (USE_MOCK) {
-    const index = inventoryData.findIndex((item) => item.id === id);
-    if (index === -1) throw new Error('Product not found');
-    inventoryData[index] = { ...inventoryData[index], ...product };
-    return inventoryData[index];
-  }
-
   return request(`/products/${encodeURIComponent(id)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
@@ -132,22 +103,13 @@ export async function updateProduct(id, product) {
 }
 
 export async function deleteProduct(id) {
-  if (USE_MOCK) {
-    const index = inventoryData.findIndex((item) => item.id === id);
-    if (index !== -1) inventoryData.splice(index, 1);
-    return { success: true };
-  }
-
   return request(`/products/${encodeURIComponent(id)}`, {
     method: 'DELETE',
   });
 }
 
+// สำหรับอัปโหลดรูปภาพ (ยังคงใช้ LocalStorage ชั่วคราวไปก่อนจนกว่า Backend จะมีระบบรับไฟล์)
 export async function uploadProductImage(file) {
-  if (USE_MOCK) {
-    return { url: URL.createObjectURL(file) };
-  }
-
   try {
     const dataUrl = await readFileAsDataUrl(file);
     const { url } = storeLocalImage(file, dataUrl);
