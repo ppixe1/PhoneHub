@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import Navbar from '../AdminPage/component/Navbar';
 import TabMenu from '../AdminPage/component/TabMenu';
-import DashboardTab from '../AdminPage/component/DashboardTab';
-import InventoryTab from '../AdminPage/component/InventoryTab';
-import OrdersManagementTap from '../AdminPage/component/OrdersManagementTap';
+import DashboardTab from '../AdminPage/Dashbord/DashboardTab';
+import InventoryTab from '../AdminPage/Inventory/InventoryTab';
+import OrdersManagementTap from '../AdminPage/OrdersManagement/OrdersManagementTap';
 
 const AdminLayout = () => {
     const [activeTab, setActiveTab] = useState("orders");

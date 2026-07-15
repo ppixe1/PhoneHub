@@ -173,7 +173,7 @@ export default function DashboardTab() {
         </div>
       </div>
 
-      {/* 3. สรุปข้อมูล 5 ช่อง (ใช้ CSS Grid เพื่อให้แบ่ง 5 ส่วนเท่าๆ กัน) */}
+      {/* 3. สรุปข้อมูล 5 ช่อง */}
       <div 
         className="mb-5" 
         style={{ 

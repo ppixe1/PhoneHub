@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Search, ChevronDown, ListFilter, CheckCircle2, Clock, Package, Truck } from 'lucide-react';
-import { ordersData } from '../data/mockData';
 import { getOrders, updateOrderStatus } from '../services/api';
 
 export default function OrdersManagementTap() {
-  const [orders, setOrders] = useState(ordersData);
+  const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('สถานะทั้งหมด');
   const [isLoading, setIsLoading] = useState(false);
@@ -54,7 +53,7 @@ export default function OrdersManagementTap() {
     }
   };
 
-  // ตัวเลือกสำหรับ Dropdown พร้อม Icon แท้
+  // ตัวเลือกสำหรับ Dropdown 
   const statusOptions = [
     { value: 'สถานะทั้งหมด', label: 'สถานะทั้งหมด', icon: <ListFilter size={16} color="#6C757D" /> },
     { value: 'รอดำเนินการ', label: 'รอดำเนินการ', icon: <Clock size={16} color="#F57F17" /> },
