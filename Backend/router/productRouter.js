@@ -45,12 +45,16 @@ router.post('/', (req, res) => {
     specifications,
   } = req.body;
   
-  if (!brand || !model || !ram || !variation || !img || !specifications) return res.status(400).json({ msg: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
+  if (!brand || !model || !variation || !img || !specifications) return res.status(400).json({ msg: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
+
+  const variationString = typeof variation === 'object' ? JSON.stringify(variation) : variation;
+  const imgString = typeof img === 'object' ? JSON.stringify(img) : img;
+  const specificationsString = typeof specifications === 'object' ? JSON.stringify(specifications) : specifications;
 
   db.query('INSERT INTO products (brand, model, variation, img, specifications) VALUES(?,?,?,?,?)',
-  [brand, model, variation, img, specifications],
+  [brand, model, variationString, imgString, specificationsString],
   (err, result) => {
-    if (err) return res.status(500).json({ msg: 'Server Error' });
+    if (err) return res.status(500).json({ msg: err });
     res.status(200).json({ msg: 'สร้างสินค้าสําเร็จ!', result });
   })
 })
