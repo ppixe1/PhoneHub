@@ -74,10 +74,14 @@ router.put('/:id', (req, res) => {
     specifications,
   } = req.body;
 
-  if (!brand || !model || !ram || !variation || !img || !specifications) return res.status(400).json({ msg: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
+  if (!brand || !model || !variation || !img || !specifications) return res.status(400).json({ msg: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
+
+  const variationString = typeof variation === 'object' ? JSON.stringify(variation) : variation;
+  const imgString = typeof img === 'object' ? JSON.stringify(img) : img;
+  const specificationsString = typeof specifications === 'object' ? JSON.stringify(specifications) : specifications;
 
   db.query('UPDATE products SET brand = ?, model = ?, variation = ?, img = ?, specifications = ? WHERE id = ?',
-  [brand, model, variation, img, specifications, id],
+  [brand, model, variationString, imgString, specificationsString, id],
   (err, result) => {
     if (err) return res.status(500).json({ msg: 'Server Error' });
     res.status(200).json({ msg: 'แก้ไขสินค้าสําเร็จ!', result });
