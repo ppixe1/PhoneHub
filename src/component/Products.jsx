@@ -138,6 +138,7 @@ export default function Products({ onAddToCart, cartCount = 0, onViewCart }) {
                 <span style={{ display: 'inline-block', width: '20px', height: '20px', borderRadius: '50%', backgroundColor: '#ffd700', marginRight: '8px' }}></span>
               </div>
 
+
               {selectedProduct.specs && (
                 <div style={{ margin: '0 0 25px 0', padding: '15px', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px solid #eee' }}>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 20px', fontSize: '14px', color: '#333' }}>

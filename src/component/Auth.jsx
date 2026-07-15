@@ -9,22 +9,31 @@ const theme = {
 
 export default function Auth({ onLoginSuccess }) {
   const [isLogin, setIsLogin] = useState(true);
-  const [isForgotPassword, setIsForgotPassword] = useState(false); // สเตทสำหรับลืมรหัสผ่าน
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [username, setUsername] = useState('');
+  
+  // เพิ่ม State สำหรับเก็บข้อมูลหน้าสมัครสมาชิก
+  const [registerUsername, setRegisterUsername] = useState(''); // เพิ่ม username สำหรับสมัคร
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isForgotPassword) {
-      // จัดการระบบส่งลิงก์รีเซ็ตรหัสผ่านที่นี่
       alert(`ส่งลิงก์กู้คืนรหัสผ่านไปยัง ${username} เรียบร้อยแล้ว`);
       setIsForgotPassword(false);
       setIsLogin(true);
+    } else if (!isLogin) {
+      // จัดการระบบสมัครสมาชิก
+      alert(`สมัครสมาชิกสำเร็จ!\nUsername: ${registerUsername}\nชื่อ: ${fullName}\nอีเมล: ${email}\nเบอร์โทร: ${phone}`);
+      setIsLogin(true); 
     } else if (username.trim()) {
       onLoginSuccess({ name: username, id: 'USER-007' });
     }
   };
 
-  // กำหนดหัวข้อตามสถานะหน้าจอ
   const getTitle = () => {
     if (isForgotPassword) return 'ลืมรหัสผ่าน';
     return isLogin ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก';
@@ -37,30 +46,54 @@ export default function Auth({ onLoginSuccess }) {
         <h2 style={{ fontSize: '24px', fontWeight: '600', marginBottom: '20px', textAlign: 'center' }}>{getTitle()}</h2>
         
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '14px', marginBottom: '8px' }}>ชื่อผู้ใช้งาน / อีเมล</label>
-            <input 
-              type="text" 
-              value={username} 
-              onChange={(e) => setUsername(e.target.value)} 
-              required 
-              style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box', fontSize: '14px' }}
-            />
-          </div>
+          
+          {/* ช่อง Login ปกติ */}
+          {isLogin && !isForgotPassword && (
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', marginBottom: '8px' }}>ชื่อผู้ใช้งาน / อีเมล</label>
+              <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} required style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }} />
+            </div>
+          )}
 
-          {/* ซ่อนช่องรหัสผ่านเมื่ออยู่ในหน้าลืมรหัสผ่าน */}
+          {/* ช่อง ลืมรหัสผ่าน */}
+          {isForgotPassword && (
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', marginBottom: '8px' }}>ชื่อผู้ใช้งาน / อีเมล</label>
+              <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} required style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }} />
+            </div>
+          )}
+
+          {/* ช่อง สมัครสมาชิก (เพิ่ม Username เข้าไปแล้ว) */}
+          {!isLogin && !isForgotPassword && (
+            <>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', marginBottom: '8px' }}>ชื่อผู้ใช้งาน (Username)</label>
+                <input type="text" value={registerUsername} onChange={(e) => setRegisterUsername(e.target.value)} required style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', marginBottom: '8px' }}>ชื่อ-นามสกุล</label>
+                <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} required style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', marginBottom: '8px' }}>อีเมล</label>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '14px', marginBottom: '8px' }}>เบอร์โทรศัพท์</label>
+                <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }} />
+              </div>
+            </>
+          )}
+
+          {/* ช่อง รหัสผ่าน (แสดงใน Login และ Register) */}
           {!isForgotPassword && (
             <div>
               <label style={{ display: 'block', fontSize: '14px', marginBottom: '8px' }}>รหัสผ่าน</label>
-              <input type="password" required style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }} />
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }} />
               
-              {/* ปุ่มลืมรหัสผ่าน (แสดงเฉพาะตอนหน้าล็อกอิน) */}
               {isLogin && (
                 <div style={{ textAlign: 'right', marginTop: '8px' }}>
-                  <span 
-                    onClick={() => { setIsForgotPassword(true); setIsLogin(false); }}
-                    style={{ fontSize: '13px', color: theme.primary, cursor: 'pointer', textDecoration: 'underline' }}
-                  >
+                  <span onClick={() => { setIsForgotPassword(true); setIsLogin(false); }} style={{ fontSize: '13px', color: theme.primary, cursor: 'pointer', textDecoration: 'underline' }}>
                     ลืมรหัสผ่าน?
                   </span>
                 </div>
@@ -73,12 +106,9 @@ export default function Auth({ onLoginSuccess }) {
           </button>
         </form>
 
-        {/* ปุ่มสลับหน้าจอด้านล่างสุด */}
         <div style={{ fontSize: '14px', textAlign: 'center', marginTop: '20px', cursor: 'pointer', color: '#666' }}>
           {isForgotPassword ? (
-            <span onClick={() => { setIsForgotPassword(false); setIsLogin(true); }}>
-              กลับไปหน้าเข้าสู่ระบบ
-            </span>
+            <span onClick={() => { setIsForgotPassword(false); setIsLogin(true); }}>กลับไปหน้าเข้าสู่ระบบ</span>
           ) : isLogin ? (
             <span onClick={() => setIsLogin(false)}>ยังไม่มีบัญชี? สมัครสมาชิกที่นี่</span>
           ) : (
