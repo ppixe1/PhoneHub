@@ -11,6 +11,7 @@ const theme = {
 export default function Cart() {
   const [cartItem, setCartItem] = useState([]);
 
+  
 
   return (
     <div style={{ fontFamily: theme.fontFamily, backgroundColor: theme.background, minHeight: '100vh' }}>
