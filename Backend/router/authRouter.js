@@ -3,8 +3,11 @@ const router = express.Router();
 const db = require('../db.js');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const dotenv = require('dotenv');
 
-const secret_key = "adminPixel101"
+dotenv.config();
+
+const secret_key = process.env.SECRET_KEY;
 
 // Register
 router.post('/register', (req, res) => {
@@ -81,23 +84,6 @@ router.post('/login', (req, res) => {
 
     res.status(200).json({ msg: 'เข้าสู่ระบบสําเร็จ!', token });
   })
-})
-
-
-
-// Get User Data from Token
-router.get('/me/:token', (req, res) => {
-  const token = req.params.token;
-  const decoded = jwt.verify(token, secret_key);
-
-  const user = {
-    id: decoded.user_id,
-    role: decoded.role,
-    username: decoded.username,
-    name: decoded.name
-  }
-
-  res.status(200).json({ user });
 })
 
 
