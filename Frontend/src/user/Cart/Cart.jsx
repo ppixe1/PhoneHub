@@ -8,28 +8,9 @@ const theme = {
 };
 
 // เพิ่มพรอพ onBack เข้ามาสำหรับปุ่มย้อนกลับ
-export default function Cart({ cartItems, onUpdateQuantity, onRemove, onNextStep, onBack }) {
-  // สร้าง State สำหรับเก็บ ID ของสินค้าที่ถูกติ๊กเลือก
-  const [selectedItems, setSelectedItems] = useState([]);
+export default function Cart() {
+  const [cartItem, setCartItem] = useState([]);
 
-  // ฟังก์ชันสำหรับจัดการเวลาติ๊กเลือกสินค้า
-  const handleToggleItem = (id) => {
-    setSelectedItems(prev => 
-      prev.includes(id) 
-        ? prev.filter(itemId => itemId !== id) // ถ้ามีอยู่แล้วให้เอาออก (ติ๊กออก)
-        : [...prev, id] // ถ้ายังไม่มีให้เพิ่มเข้าไป (ติ๊กเลือก)
-    );
-  };
-
-  // กรองเอาเฉพาะสินค้าที่ผู้ใช้กดเลือกไว้
-  const selectedCartItems = cartItems.filter(item => selectedItems.includes(item.id));
-
-  // คำนวณยอดรวม *เฉพาะสินค้าที่ถูกติ๊กเลือกเท่านั้น*
-  const totalAmount = selectedCartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-  // เช็คว่ามีสินค้าในตะกร้าหรือไม่ และมีสินค้าที่ถูกเลือกอยู่หรือไม่
-  const hasCartItems = cartItems.length > 0;
-  const hasSelectedItems = selectedItems.length > 0;
 
   return (
     <div style={{ fontFamily: theme.fontFamily, backgroundColor: theme.background, minHeight: '100vh' }}>
@@ -40,7 +21,7 @@ export default function Cart({ cartItems, onUpdateQuantity, onRemove, onNextStep
           onClick={onBack} 
           style={{ 
             display: 'flex', 
-            alignItems: 'center', 
+            alignItems: 'center',
             cursor: 'pointer',
             padding: '4px',
             borderRadius: '50%',
