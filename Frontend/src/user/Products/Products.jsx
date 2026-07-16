@@ -255,26 +255,12 @@ export default function Products({
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
+        maxHeight: '60px',
       }}
     >
-      <h1
-        style={{
-          fontSize: '24px',
-          fontWeight: 'bold',
-          margin: 0,
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          fontFamily: theme.fontFamily,
-        }}
-        onClick={() => {
-          clearSelected();
-          handleClearFilter();
-        }}
-      >
-        <span style={{ color: '#ffffff', fontFamily: theme.fontFamily }}>PHONE</span>
-        <span style={{ color: '#ffd700', fontFamily: theme.fontFamily }}>HUB</span>
-      </h1>
+      <div className='d-flex justify-content-start align-items-center object-fit-contain' style={{ width: '150px' }}>
+        <img className='w-100 h-100 object-fit-contain' src="/PhoneHubLOGO.png" />
+      </div>
 
       <div
         style={{
@@ -762,6 +748,7 @@ export default function Products({
                   <img src={product.img} alt={product.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                 </div>
                 <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px', height: '40px', overflow: 'hidden', color: '#333' }}>
+                  <span className='badge bg-color-primary'>{product.brand}</span><br />
                   {product.name}
                 </div>
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'baseline' }}>

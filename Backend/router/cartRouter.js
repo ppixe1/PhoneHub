@@ -52,7 +52,21 @@ router.post('/', (req, res) => {
   [user_id, product_id, quantity, color, storage, price, brand, model, img],
   (err, result) => {
     if (err) return res.status(500).json({ msg: 'Server Error' });
-    res.status(200).json({ msg: 'เพิ่มสินค้าสําเร็จ!', result });
+
+    const newItemInCart = {
+      id: result.insertId,
+      user_id,
+      product_id,
+      quantity,
+      color,
+      storage,
+      price,
+      brand,
+      model,
+      img
+    }
+
+    res.status(200).json({ msg: 'เพิ่มสินค้าสําเร็จ!', newItemInCart });
   })
 })
 
@@ -76,7 +90,14 @@ router.put('/', (req, res) => {
   [quantity, id, user_id],
   (err, result) => {
     if (err) return res.status(500).json({ msg: 'Server Error' });
-    res.status(200).json({ msg: 'แก้ไขสินค้าสําเร็จ!', result });
+
+    const updatedItemInCart = {
+      id,
+      user_id,
+      quantity
+    }
+
+    res.status(200).json({ msg: 'แก้ไขสินค้าสําเร็จ!', updatedItemInCart });
   })
 })
 

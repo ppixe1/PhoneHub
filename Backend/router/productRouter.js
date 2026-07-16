@@ -38,7 +38,17 @@ router.post('/', (req, res) => {
   [brand, model, variationString, imgString, specificationsString],
   (err, result) => {
     if (err) return res.status(500).json({ msg: err });
-    res.status(200).json({ msg: 'สร้างสินค้าสําเร็จ!', result });
+
+    const newProduct = {
+      id: result.insertId,
+      brand,
+      model,
+      variation,
+      img,
+      specifications
+    }
+
+    res.status(200).json({ msg: 'สร้างสินค้าสําเร็จ!', newProduct });
   })
 })
 
@@ -67,7 +77,17 @@ router.put('/:id', (req, res) => {
   [brand, model, variationString, imgString, specificationsString, id],
   (err, result) => {
     if (err) return res.status(500).json({ msg: 'Server Error' });
-    res.status(200).json({ msg: 'แก้ไขสินค้าสําเร็จ!', result });
+
+    const updatedProdcut = {
+      id,
+      brand,
+      model,
+      variation,
+      img,
+      specifications
+    }
+
+    res.status(200).json({ msg: 'แก้ไขสินค้าสําเร็จ!', updatedProdcut });
   })
 })
 
