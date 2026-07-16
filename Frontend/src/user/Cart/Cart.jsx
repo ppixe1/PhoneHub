@@ -11,47 +11,43 @@ const theme = {
 
 export default function Cart() {
   // ---------------------------------------------------------------------------
-  // 1. STATES (จัดการข้อมูลในหน้าจอ)
+  // 1. STATES
   // ---------------------------------------------------------------------------
-  const [cartItems, setCartItems] = useState([]); // รายการสินค้าทั้งหมดในตะกร้า
+  const [cartItems, setCartItems] = useState([]); // รายการสินค้าทั้งหมดในตะกร้า (มี quantity ของแต่ละตัวอยู่แล้ว)
   const [selectedItems, setSelectedItems] = useState([]); // เก็บ ID ของสินค้าที่ถูกติ๊กเลือก
   const [isLoading, setIsLoading] = useState(true); // สถานะรอโหลดข้อมูลจาก API
 
   const navigate = useNavigate();
 
   // ---------------------------------------------------------------------------
-  // 2. COMPUTED VALUES (ตัวแปรคำนวณอัตโนมัติจาก State)
+  // 2. COMPUTED VALUES
   // ---------------------------------------------------------------------------
   const hasCartItems = cartItems.length > 0;
   const hasSelectedItems = selectedItems.length > 0;
   
-  // กรองเฉพาะสินค้าที่ถูกติ๊กเลือก
   const selectedCartItems = cartItems.filter(item => selectedItems.includes(item.id));
   
-  // คำนวณยอดรวม (ราคา * จำนวน) เฉพาะสินค้าที่ถูกเลือก
   const totalAmount = selectedCartItems.reduce(
     (sum, item) => sum + (item.price * item.quantity), 
     0
   );
 
   // ---------------------------------------------------------------------------
-  // 3. API FUNCTIONS (ฟังก์ชันเตรียมพร้อมต่อ API)
+  // 3. API FUNCTIONS
   // ---------------------------------------------------------------------------
   
-  // ดึงข้อมูลตะกร้าสินค้าตอนเปิดหน้านี้ครั้งแรก
+  // ดึงข้อมูลตะกร้าสินค้าตอนเปิดหน้านี้ครั้งแรก (ดึง quantity ของแต่ละชิ้นมาจาก DB)
   useEffect(() => {
     const fetchCartData = async () => {
       setIsLoading(true);
       try {
-        // [API TODO: 1] ยิง API GET เพื่อดึงข้อมูลสินค้าในตะกร้าของ User ตรงนี้
-        // const response = await axios.get('/api/cart');
-        // setCartItems(response.data);
         const res = await axios.get('http://localhost:3000/cart', {
           headers: {
             Authorization: `Bearer ${sessionStorage.getItem('token')}`
           }
         });
-        setCartItems(res.data);
+        // ใน res.data จะมีข้อมูลแต่ละ item เป็น { id, model, price, quantity, img, ... }
+        setCartItems((res.data) );
       } catch (error) {
         console.error("Failed to fetch cart:", error);
       } finally {
@@ -66,42 +62,62 @@ export default function Cart() {
   const handleToggleItem = (id) => {
     setSelectedItems(prev =>
       prev.includes(id) 
-        ? prev.filter(itemId => itemId !== id) // ถ้ามีอยู่แล้วให้เอาออก
-        : [...prev, id] // ถ้ายังไม่มีให้เพิ่มเข้าไป
+        ? prev.filter(itemId => itemId !== id)
+        : [...prev, id]
     );
   };
 
-  // ฟังก์ชันเพิ่ม/ลดจำนวนสินค้า
-  const onUpdateQuantity = async (id, newQuantity) => {
-    if (newQuantity < 1) return; // ป้องกันไม่ให้ลดจำนวนต่ำกว่า 1
-    
-    // [API TODO: 2] ยิง API PUT/PATCH เพื่ออัปเดตจำนวนสินค้าบน Database ตรงนี้
-    // await axios.patch(`/api/cart/${id}`, { quantity: newQuantity });
+  // ฟังก์ชันอัปเดตจำนวนสินค้า (แยกตาม ID ของสินค้าแต่ละชิ้น)
+  const updateQuantity = async (id, action) => {
+    // หาข้อมูลสินค้าปัจจุบันที่ต้องการอัปเดต
+    const targetItem = cartItems.find(item => item.id === id);
+    if (!targetItem) return;
 
-    // อัปเดต UI ทันทีไม่ต้องรอโหลดใหม่ (Optimistic UI Update)
-    setCartItems(prev =>
+    // คำนวณค่า quantity ใหม่
+    let newQuantity = targetItem.quantity;
+    if (action === '+') {
+      newQuantity += 1;
+    } else {
+      newQuantity = targetItem.quantity > 1 ? targetItem.quantity - 1 : 1;
+    }
+
+    // เจตนาทำ Optimistic UI: อัปเดตหน้าจอทันทีเพื่อให้ผู้ใช้รู้สึกลื่นไหล
+    setCartItems(prev => 
       prev.map(item => item.id === id ? { ...item, quantity: newQuantity } : item)
     );
+
+    // ยิง API ไปบันทึกที่ Database
+    try {
+      await axios.put('http://localhost:3000/cart', 
+        { id, quantity: newQuantity }, 
+        {
+          headers: {
+            Authorization: `Bearer ${sessionStorage.getItem('token')}`
+          }
+        }
+      );
+    } catch (error) {
+      console.error("Failed to update quantity in DB:", error);
+      // ถ้ายิง API พลาด สามารถดึงข้อมูลใหม่มาทับเพื่อ Rollback ได้
+    }
   };
 
   // ฟังก์ชันลบสินค้าออกจากตะกร้า
   const onRemove = async (id) => {
-    // [API TODO: 3] ยิง API DELETE เพื่อลบสินค้าออกจาก Database ตรงนี้
-    // await axios.delete(`/api/cart/${id}`);
-
-    // อัปเดต UI
-    setCartItems(prev => prev.filter(item => item.id !== id));
-    setSelectedItems(prev => prev.filter(itemId => itemId !== id)); // ลบออกจากรายการที่เลือกด้วย
+    try {
+      // แนะนำให้แก้ไอดีส่งไปลบให้ตรงกับหลังบ้านด้วยครับ (ใช้ item.id หรือ item.product_id)
+      await axios.delete(`http://localhost:3000/cart/${id}`);
+      
+      setCartItems(prev => prev.filter(item => item.id !== id));
+      setSelectedItems(prev => prev.filter(itemId => itemId !== id));
+    } catch (error) {
+      console.error("Failed to remove item:", error);
+    }
   };
 
-  // ฟังก์ชันกดชำระเงิน
   const onNextStep = async () => {
-    // [API TODO: 4] ส่งข้อมูล selectedItems หรือ selectedCartItems ไปให้ฝั่ง API สร้าง Order ตรงนี้
     console.log("Proceeding to checkout with items:", selectedCartItems);
     console.log("Total Amount:", totalAmount);
-    
-    // สำเร็จแล้วให้เปลี่ยนหน้าไปชำระเงิน
-    // navigate('/checkout');
   };
 
   const onBack = () => {
@@ -113,18 +129,10 @@ export default function Cart() {
   // ---------------------------------------------------------------------------
   return (
     <div style={{ fontFamily: theme.fontFamily, backgroundColor: theme.background, minHeight: '100vh' }}>
-      {/* Header พร้อมไอคอนย้อนกลับ */}
       <div style={{ backgroundColor: theme.primary, color: '#fff', padding: '15px 5%', display: 'flex', alignItems: 'center', gap: '15px' }}>
         <div 
           onClick={onBack} 
-          style={{ 
-            display: 'flex', 
-            alignItems: 'center',
-            cursor: 'pointer',
-            padding: '4px',
-            borderRadius: '50%',
-            transition: 'background-color 0.2s'
-          }}
+          style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '4px', borderRadius: '50%', transition: 'background-color 0.2s' }}
           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
           onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
         >
@@ -139,16 +147,9 @@ export default function Cart() {
         </h1>
       </div>
 
-      <div style={{ 
-        padding: '40px 5%', 
-        display: 'grid', 
-        gridTemplateColumns: hasSelectedItems ? '2fr 1fr' : '1fr', 
-        gap: '30px' 
-      }}>
-        {/* รายการสินค้าฝั่งซ้าย */}
+      <div style={{ padding: '40px 5%', display: 'grid', gridTemplateColumns: hasSelectedItems ? '2fr 1fr' : '1fr', gap: '30px' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', minHeight: '300px' }}>
           
-          {/* จัดการสถานะกำลังโหลดข้อมูล */}
           {isLoading ? (
              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, height: '100%' }}>
                <p style={{ fontSize: '18px', color: '#666', fontWeight: '500', fontFamily: theme.fontFamily }}>กำลังโหลด...</p>
@@ -165,12 +166,7 @@ export default function Cart() {
                     type="checkbox" 
                     checked={selectedItems.includes(item.id)}
                     onChange={() => handleToggleItem(item.id)}
-                    style={{ 
-                      width: '20px', 
-                      height: '20px', 
-                      accentColor: theme.primary,
-                      cursor: 'pointer' 
-                    }} 
+                    style={{ width: '20px', height: '20px', accentColor: theme.primary, cursor: 'pointer' }} 
                   />
                   
                   <div style={{ width: '60px', height: '60px', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
@@ -178,28 +174,30 @@ export default function Cart() {
                   </div>
                   <div>
                     <div style={{ fontSize: '14px', fontWeight: '600', fontFamily: theme.fontFamily }}>{item.model}</div>
+                    <div style={{ fontSize: '14px', fontWeight: 'normal', fontFamily: theme.fontFamily }}>สี: {item.color} ความจุ: {item.storage}</div>
                     <div style={{ fontSize: '12px', color: theme.primary, fontFamily: theme.fontFamily }}>฿{item.price.toLocaleString()}</div>
                   </div>
                 </div>
+                
+                {/* แก้ไขส่วนนี้: เปลี่ยนจาก quantity เฉยๆ เป็น item.quantity */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <button className='btn btn-outline-secondary' onClick={() => onUpdateQuantity(item.product_id, item.quantity - 1)} style={{ padding: '2px 8px', fontFamily: theme.fontFamily, cursor: 'pointer' }}>-</button>
+                  <button className='btn btn-outline-secondary' onClick={() => updateQuantity(item.id, "-")} style={{ padding: '2px 8px', fontFamily: theme.fontFamily, cursor: 'pointer' }}>-</button>
                   <span style={{ fontSize: '14px', fontFamily: theme.fontFamily, width: '20px', textAlign: 'center' }}>{item.quantity}</span>
-                  <button className='btn btn-outline-secondary' onClick={() => onUpdateQuantity(item.product_id, item.quantity + 1)} style={{ padding: '2px 8px', fontFamily: theme.fontFamily, cursor: 'pointer' }}>+</button>
-                  <button  onClick={() => onRemove(item.product_id)} style={{ marginLeft: '15px', color: 'red', border: 'none', background: 'none', cursor: 'pointer', fontSize: '12px', fontFamily: theme.fontFamily }}>ลบ</button>
+                  <button className='btn btn-outline-secondary' onClick={() => updateQuantity(item.id, "+")} style={{ padding: '2px 8px', fontFamily: theme.fontFamily, cursor: 'pointer' }}>+</button>
+                  <button onClick={() => onRemove(item.id)} style={{ marginLeft: '15px', color: 'red', border: 'none', background: 'none', cursor: 'pointer', fontSize: '12px', fontFamily: theme.fontFamily }}>ลบ</button>
                 </div>
               </div>
             ))
           )}
         </div>
 
-        {/* รายการสรุปฝั่งขวา: แสดงชื่อและรูปสินค้าที่เลือก */}
         {hasSelectedItems && (
           <div style={{ backgroundColor: '#ffffff', border: '1px solid #ddd', padding: '20px', borderRadius: '4px', height: 'fit-content' }}>
             <h3 style={{ fontSize: '18px', fontWeight: '600', margin: '0 0 15px 0', borderBottom: '1px solid #eee', paddingBottom: '10px', fontFamily: theme.fontFamily }}>รายการยอดรวมสินค้า</h3>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '15px', maxHeight: '200px', overflowY: 'auto' }}>
               {selectedCartItems.map(item => (
-                <div key={`summary-${item.product_id}`} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px' }}>
+                <div key={`summary-${item.id}`} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px' }}>
                   <div style={{ width: '40px', height: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center', border: '1px solid #eee', borderRadius: '4px', backgroundColor: '#fff', flexShrink: 0 }}>
                     <img src={item.img} alt={item.model} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                   </div>
@@ -230,19 +228,7 @@ export default function Cart() {
             </div>
             <button 
               onClick={onNextStep}
-              style={{ 
-                width: '100%', 
-                backgroundColor: theme.primary, 
-                color: '#fff', 
-                border: 'none', 
-                padding: '12px', 
-                fontSize: '16px', 
-                fontWeight: '600', 
-                cursor: 'pointer', 
-                textAlign: 'center',
-                borderRadius: '4px',
-                fontFamily: theme.fontFamily
-              }}
+              style={{ width: '100%', backgroundColor: theme.primary, color: '#fff', border: 'none', padding: '12px', fontSize: '16px', fontWeight: '600', cursor: 'pointer', textAlign: 'center', borderRadius: '4px', fontFamily: theme.fontFamily }}
             >
               ชำระเงิน
             </button>

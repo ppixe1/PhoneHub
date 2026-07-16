@@ -43,18 +43,28 @@ export default function Products({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const [selectedProduct, setSelectedProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedProduct, setSelectedProduct] = useState(null);
   
-  // State สำหรับการเลือกสีและความจุ
+  // State สำหรับการเลือก
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedStorage, setSelectedStorage] = useState(null);
+  const [selectedPrice, setSelectedPrice] = useState(null);
+  const [selectedQuantity, setSelectedQuantity] = useState(1);
 
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
 
   const navigate = useNavigate()
+
+  const clearSelected = () => {
+    setSelectedProduct(null);
+    setSelectedColor(null);
+    setSelectedStorage(null);
+    setSelectedPrice(null);
+    setSelectedQuantity(null);
+  }
 
   const onLogout = () => {
     navigate('/login')
@@ -65,7 +75,41 @@ export default function Products({
   }
 
   const onAddToCart = () => {
-    
+    const token = sessionStorage.getItem('token')
+    if (!token) return alert('คุณไม่มี Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง')
+
+    if (!selectedProduct || !selectedProduct.rawVariations) {
+      console.error("ไม่มีข้อมูลสินค้า");
+      return;
+    }
+
+    const variations = selectedProduct.rawVariations;
+    const matchedVariation = variations.find(item => 
+      item.storage === selectedStorage && item.color === selectedColor.name
+  );
+
+    if (selectedColor.name === null || selectedStorage === null || matchedVariation.price === null || selectedQuantity === null || selectedProduct === null) return alert('กรุณาเลือกสเปกสินค้าที่ต้องการก่อนเพิ่มในตะกร้า')
+    axios.post(`${API_BASE_URL}/cart`, {
+      product_id: selectedProduct.id,
+      color: selectedColor.name,
+      storage: selectedStorage,
+      price: matchedVariation.price,
+      quantity: selectedQuantity,
+      brand: selectedProduct.brand,
+      model: selectedProduct.name,
+      img: selectedProduct.img
+    }, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    .then((res) => {
+      if (!res) return alert('เกิดข้อผิดพลาด');
+      if (res.status === 200) {
+        alert(res.data.msg);
+        
+      }
+    })
   }
 
   // ฟังก์ชันสำหรับแปลงข้อมูลจาก API ให้อยู่ในรูปแบบที่ Frontend ใช้งานง่ายขึ้น
@@ -224,9 +268,7 @@ export default function Products({
           fontFamily: theme.fontFamily,
         }}
         onClick={() => {
-          setSelectedProduct(null);
-          setSelectedColor(null);
-          setSelectedStorage(null);
+          clearSelected();
           handleClearFilter();
         }}
       >
@@ -246,9 +288,7 @@ export default function Products({
         <span
           style={{ cursor: 'pointer', fontFamily: theme.fontFamily }}
           onClick={() => {
-            setSelectedProduct(null);
-            setSelectedColor(null);
-            setSelectedStorage(null);
+            clearSelected();
             handleClearFilter();
           }}
         >
@@ -376,13 +416,14 @@ export default function Products({
     const currentStock = currentVariation ? Number(currentVariation.stock) : 0;
     const isOutOfStock = currentVariation && currentStock === 0;
 
+
     return (
       <div style={{ fontFamily: theme.fontFamily, backgroundColor: theme.background, minHeight: '100vh' }}>
         <Header />
         <div style={{ padding: '40px 5%', maxWidth: '1200px', margin: '0 auto' }}>
           <p
             style={{ fontSize: '14px', color: '#666', marginBottom: '20px', cursor: 'pointer', fontFamily: theme.fontFamily }}
-            onClick={() => { setSelectedProduct(null); setSelectedColor(null); setSelectedStorage(null); }}
+            onClick={() => { clearSelected(); }}
           >
             หน้าแรก &gt; {selectedProduct.name}
           </p>
@@ -475,22 +516,73 @@ export default function Products({
               )}
 
               {currentVariation && (
-                <div style={{ marginBottom: '20px', fontSize: '14px', color: isOutOfStock ? '#d32f2f' : '#2e7d32', fontWeight: '500' }}>
-                  {isOutOfStock ? 'สินค้าหมดชั่วคราวสำหรับตัวเลือกนี้' : `มีสินค้าพร้อมส่ง (${currentStock} ชิ้น)`}
+                <div style={{ marginBottom: '20px', borderTop: '1px solid #f0f0f0', paddingTop: '15px' }}>
+                  {isOutOfStock ? (
+                    <div style={{ fontSize: '14px', color: '#d32f2f', fontWeight: '500' }}>
+                      สินค้าหมดชั่วคราวสำหรับตัวเลือกนี้
+                    </div>
+                  ) : (
+                    <div>
+                      <span style={{ fontSize: '14px', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>
+                        จำนวน:
+                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        
+                        {/* Group ปุ่มปรับจำนวน */}
+                        <div style={{ display: 'flex', alignItems: 'center', border: '1.5px solid #ddd', borderRadius: '8px', overflow: 'hidden' }}>
+                          <button
+                            onClick={() => setSelectedQuantity(prev => Math.max(1, prev - 1))}
+                            disabled={selectedQuantity <= 1}
+                            style={{
+                              padding: '8px 16px',
+                              backgroundColor: selectedQuantity <= 1 ? '#f9f9f9' : '#fff',
+                              border: 'none',
+                              borderRight: '1.5px solid #ddd',
+                              cursor: selectedQuantity <= 1 ? 'not-allowed' : 'pointer',
+                              fontSize: '18px',
+                              color: selectedQuantity <= 1 ? '#ccc' : '#333',
+                              fontFamily: theme.fontFamily,
+                              transition: 'background-color 0.2s'
+                            }}
+                          >
+                            -
+                          </button>
+                          
+                          <div style={{ padding: '8px 20px', fontSize: '16px', fontWeight: 'bold', minWidth: '45px', textAlign: 'center', backgroundColor: '#fff' }}>
+                            {selectedQuantity}
+                          </div>
+                          
+                          <button
+                            onClick={() => setSelectedQuantity(prev => Math.min(currentStock, prev + 1))}
+                            disabled={selectedQuantity >= currentStock}
+                            style={{
+                              padding: '8px 16px',
+                              backgroundColor: selectedQuantity >= currentStock ? '#f9f9f9' : '#fff',
+                              border: 'none',
+                              borderLeft: '1.5px solid #ddd',
+                              cursor: selectedQuantity >= currentStock ? 'not-allowed' : 'pointer',
+                              fontSize: '18px',
+                              color: selectedQuantity >= currentStock ? '#ccc' : '#333',
+                              fontFamily: theme.fontFamily,
+                              transition: 'background-color 0.2s'
+                            }}
+                          >
+                            +
+                          </button>
+                        </div>
+                        
+                        <span style={{ fontSize: '14px', color: '#2e7d32', fontWeight: '500' }}>
+                          มีสินค้าพร้อมส่ง ({currentStock} ชิ้น)
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
               <button
                 disabled={isOutOfStock || !currentVariation}
-                onClick={() => {
-                  onAddToCart({
-                    ...selectedProduct,
-                    price: currentPrice,
-                    selectedColor: selectedColor?.name,
-                    selectedVariant: selectedStorage,
-                  });
-                  alert('เพิ่มลงตะกร้าเรียบร้อย!');
-                }}
+                onClick={() => onAddToCart()}
                 style={{
                   backgroundColor: isOutOfStock || !currentVariation ? '#ccc' : theme.primary,
                   color: '#fff',
