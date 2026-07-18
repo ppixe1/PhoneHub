@@ -737,7 +737,7 @@ export default function Products({
 
       {/* Categories */}
       <div style={{ padding: '30px 5% 10px 5%' }}>
-        <h2 style={{ fontSize: '22px', fontWeight: '600', marginBottom: '20px' }}>หมวดหมู่สินค้า</h2>
+        <h2 className='mb-1' style={{ fontSize: '22px', fontWeight: '600', marginBottom: '20px' }}>หมวดหมู่สินค้า</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '15px' }}>
           {categories.map((cat) => (
             <div key={cat.id} onClick={() => setSelectedCategory(cat.id)} style={{ backgroundColor: cat.color, padding: '20px 10px', borderRadius: '12px', textAlign: 'center', cursor: 'pointer', border: selectedCategory === cat.id ? `2px solid ${theme.primary}` : '2px solid transparent', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
@@ -771,7 +771,6 @@ export default function Products({
 
       {/* Products Grid */}
       <div style={{ padding: '20px 5% 40px 5%' }}>
-        <h2 style={{ fontSize: '22px', fontWeight: '600', marginBottom: '20px' }}>สินค้าทั้งหมด</h2>
         {filteredProducts.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '50px 20px', color: '#666', backgroundColor: '#fff', borderRadius: '8px', border: '1px dashed #ccc' }}>
             ไม่พบสินค้าที่ตรงกับเงื่อนไข

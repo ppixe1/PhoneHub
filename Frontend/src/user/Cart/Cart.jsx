@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
+import Payment from '../Payment/Payment';
+
 const theme = {
   primary: '#B00000',
   background: '#FAFAFA',
@@ -115,9 +117,11 @@ export default function Cart() {
     }
   };
 
-  const onNextStep = async () => {
-    console.log("Proceeding to checkout with items:", selectedCartItems);
-    console.log("Total Amount:", totalAmount);
+  const onNextStep = () => {
+    if (selectedCartItems.length === 0) return alert('กรุณาเลือกสินค้าก่อนชำระเงิน');
+    
+    navigate('/payment', { state: { selectedCartItems, totalAmount } });
+    window.scrollTo(0, 0);
   };
 
   const onBack = () => {
@@ -129,8 +133,9 @@ export default function Cart() {
   // ---------------------------------------------------------------------------
   return (
     <div style={{ fontFamily: theme.fontFamily, backgroundColor: theme.background, minHeight: '100vh' }}>
-      <div className='position-sticky top-0 z-3' style={{ backgroundColor: theme.primary, color: '#fff', padding: '15px 5%', display: 'flex', alignItems: 'center', gap: '15px', maxHeight:'60px' }}>
+      <div className='bg-color-primary text-white px-5 py-3 d-flex align-items-center position-sticky top-0' style={{ maxHeight:'60px' }}>
         <div 
+          className='me-3'
           onClick={onBack} 
           style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '4px', borderRadius: '50%', transition: 'background-color 0.2s' }}
           onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
@@ -141,7 +146,7 @@ export default function Cart() {
             <polyline points="12 19 5 12 12 5"></polyline>
           </svg>
         </div>
-        
+
         <h3 className='ps-3' style={{ borderLeft:'12px solid #FFD129'}}>ตะกร้าสินค้า</h3>
       </div>
 
@@ -171,9 +176,9 @@ export default function Cart() {
                     <img src={item.img} alt={item.model} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                   </div>
                   <div>
-                    <div style={{ fontSize: '14px', fontWeight: '600', fontFamily: theme.fontFamily }}>{item.model}</div>
-                    <div style={{ fontSize: '14px', fontWeight: 'normal', fontFamily: theme.fontFamily }}>สี: {item.color} ความจุ: {item.storage}</div>
-                    <div style={{ fontSize: '12px', color: theme.primary, fontFamily: theme.fontFamily }}>฿{item.price.toLocaleString()}</div>
+                    <div style={{ fontSize: '14px', fontWeight: 'normal', fontFamily: theme.fontFamily }}>{item.brand} {item.model}</div>
+                    <div className='text-secondary' style={{ fontSize: '14px', fontWeight: 'normal', fontFamily: theme.fontFamily }}>สี: {item.color} ความจุ: {item.storage}</div>
+                    <div style={{ fontSize: '12px', color: theme.primary, fontFamily: theme.fontFamily }}>฿{Number(item.price).toLocaleString()}</div>
                   </div>
                 </div>
                 
@@ -190,7 +195,7 @@ export default function Cart() {
         </div>
 
         {hasSelectedItems && (
-          <div style={{ backgroundColor: '#ffffff', border: '1px solid #ddd', padding: '20px', borderRadius: '4px', height: 'fit-content' }}>
+          <div className='position-sticky' style={{ top:'11%', backgroundColor: '#ffffff', border: '1px solid #ddd', padding: '20px', borderRadius: '4px', height: 'fit-content' }}>
             <h3 style={{ fontSize: '18px', fontWeight: '600', margin: '0 0 15px 0', borderBottom: '1px solid #eee', paddingBottom: '10px', fontFamily: theme.fontFamily }}>รายการยอดรวมสินค้า</h3>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '15px', maxHeight: '200px', overflowY: 'auto' }}>
@@ -200,10 +205,12 @@ export default function Cart() {
                     <img src={item.img} alt={item.model} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                   </div>
                   <div style={{ flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: theme.fontFamily }}>
-                    {item.model}
+                    <span className='b2'>{item.brand} {item.model}</span><br />
+                    <span className='b2 text-secondary'>สี: {item.color} ความจุ: {item.storage}</span><br />
+                    <span className='b2'>x{item.quantity}</span>
                   </div>
-                  <div style={{ color: '#666', flexShrink: 0, fontFamily: theme.fontFamily }}>
-                    x{item.quantity}
+                  <div className='text-color-primary' style={{ flexShrink: 0, fontFamily: theme.fontFamily }}>
+                    ฿{Number(item.price * item.quantity).toLocaleString()}
                   </div>
                 </div>
               ))}

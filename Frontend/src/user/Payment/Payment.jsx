@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const theme = {
   primary: '#B00000',
@@ -7,8 +9,15 @@ const theme = {
   fontFamily: "'Kanit', sans-serif"
 };
 
-export default function Payment({ cartItems, onPaymentSuccess }) {
+export default function Payment() {
   const [method, setMethod] = useState('qr');
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const {
+    selectedCartItems = [],
+    totalAmount = 0
+  } = location.state || {};
   
   const [address, setAddress] = useState({
     fullName: '',
@@ -20,16 +29,24 @@ export default function Payment({ cartItems, onPaymentSuccess }) {
     postalCode: ''
   });
 
-  const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setAddress(prev => ({ ...prev, [name]: value }));
   };
 
   const handlePayment = () => {
-    alert('ชำระเงินสำเร็จแล้ว!');
-    onPaymentSuccess();
+    // ตรวจสอบค่า address ก่อนการสั่งซื้อ
+    if (!address.fullName || !address.phone || !address.houseNo || !address.subDistrict || !address.district || !address.province || !address.postalCode) {
+      alert('กรุณากรอกข้อมูลที่อยู่ให้ครบ');
+      return;
+    }
+
+    // try {
+    //   axios.post('http://localhost:3000/')
+    // }
+    // catch (error) {
+
+    // }
   };
 
   const inputStyle = {
@@ -39,7 +56,8 @@ export default function Payment({ cartItems, onPaymentSuccess }) {
     borderRadius: '4px',
     boxSizing: 'border-box',
     fontSize: '14px',
-    fontFamily: theme.fontFamily
+    fontFamily: theme.fontFamily,
+    outline: 'none'
   };
 
   const labelStyle = {
@@ -62,10 +80,27 @@ export default function Payment({ cartItems, onPaymentSuccess }) {
     flexShrink: 0
   };
 
+  const onBack = () => {
+    navigate('/cart');
+  }
+
   return (
     <div style={{ fontFamily: theme.fontFamily, backgroundColor: theme.background, minHeight: '100vh' }}>
-      <div style={{ backgroundColor: theme.primary, color: '#fff', padding: '15px 5%' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0, fontFamily: theme.fontFamily }}>หน้าชำระเงิน</h1>
+      <div className='bg-color-primary text-white px-5 py-3 d-flex align-items-center position-sticky top-0' style={{ maxHeight:'60px' }}>
+        <div 
+          className='me-3'
+          onClick={onBack} 
+          style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '4px', borderRadius: '50%', transition: 'background-color 0.2s' }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </div>
+
+        <h3 className='ps-3' style={{ borderLeft:'12px solid #FFD129'}}>หน้าชำระเงิน</h3>
       </div>
 
       <div style={{ padding: '30px 5%', maxWidth: '900px', margin: '0 auto' }}>
@@ -81,34 +116,34 @@ export default function Payment({ cartItems, onPaymentSuccess }) {
             </div>
             <div>
               <label style={labelStyle}>เบอร์โทรศัพท์</label>
-              <input type="text" name="phone" value={address.phone} onChange={handleInputChange} style={inputStyle} placeholder="เช่น 0812345678" />
+              <input type="text" name="phone" value={address.phone} onChange={handleInputChange} style={inputStyle} placeholder="เช่น 0999999999" />
             </div>
           </div>
 
           <div style={{ marginBottom: '15px' }}>
             <label style={labelStyle}>ที่อยู่ (บ้านเลขที่, หมู่บ้าน, ซอย, ถนน)</label>
-            <input type="text" name="houseNo" value={address.houseNo} onChange={handleInputChange} style={inputStyle} placeholder="เช่น 123/4 หมู่ 5 ซอยสุขุมวิท 21" />
+            <input type="text" name="houseNo" value={address.houseNo} onChange={handleInputChange} style={inputStyle} placeholder="เช่น 123/4 หมู่ 5 ถนนพหลโยธิน" />
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
             <div>
               <label style={labelStyle}>แขวง / ตำบล</label>
-              <input type="text" name="subDistrict" value={address.subDistrict} onChange={handleInputChange} style={inputStyle} />
+              <input type="text" name="subDistrict" value={address.subDistrict} onChange={handleInputChange} style={inputStyle} placeholder='จตุจักร' />
             </div>
             <div>
               <label style={labelStyle}>เขต / อำเภอ</label>
-              <input type="text" name="district" value={address.district} onChange={handleInputChange} style={inputStyle} />
+              <input type="text" name="district" value={address.district} onChange={handleInputChange} style={inputStyle} placeholder='จตุจักร' />
             </div>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
             <div>
               <label style={labelStyle}>จังหวัด</label>
-              <input type="text" name="province" value={address.province} onChange={handleInputChange} style={inputStyle} />
+              <input type="text" name="province" value={address.province} onChange={handleInputChange} style={inputStyle} placeholder='กรุงเทพมหานคร' />
             </div>
             <div>
               <label style={labelStyle}>รหัสไปรษณีย์</label>
-              <input type="text" name="postalCode" value={address.postalCode} onChange={handleInputChange} style={inputStyle} />
+              <input type="text" name="postalCode" value={address.postalCode} onChange={handleInputChange} style={inputStyle} placeholder='10900' />
             </div>
           </div>
         </div>
@@ -116,25 +151,26 @@ export default function Payment({ cartItems, onPaymentSuccess }) {
         {/* 2. สรุปรายการสินค้าที่มีรูปสินค้า */}
         <div style={{ backgroundColor: '#ffffff', padding: '20px', marginBottom: '20px', borderRadius: '4px', border: '1px solid #eee', display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <h3 style={{ fontSize: '16px', fontWeight: '600', margin: 0, fontFamily: theme.fontFamily }}>สรุปรายการสั่งซื้อ</h3>
-          {cartItems.map(item => (
+          {selectedCartItems.map(item => (
             <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '14px', paddingBottom: '10px', borderBottom: '1px solid #f5f5f5', ...textStyle }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                 <div style={{ width: '50px', height: '50px', display: 'flex', justifyContent: 'center', alignItems: 'center', border: '1px solid #eee', borderRadius: '4px', backgroundColor: '#fff', flexShrink: 0 }}>
-                  <img src={item.img} alt={item.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                  <img src={item.img} alt={item.model} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
                 </div>
                 <div>
-                  <div style={{ fontWeight: '500', fontFamily: theme.fontFamily }}>{item.name}</div>
-                  <div style={{ fontSize: '12px', color: '#666', fontFamily: theme.fontFamily }}>จำนวน: x{item.quantity}</div>
+                  <div className='b2' style={{ fontWeight: 'normal', fontFamily: theme.fontFamily }}>{item.brand} {item.model}</div>
+                  <div className='b2 text-secondary' style={{ fontWeight: 'normal', fontFamily: theme.fontFamily }}>สี: {item.color} ความจุ: {item.storage}</div>
+                  <div className='b2' style={{ fontSize: '12px', fontFamily: theme.fontFamily }}>x{item.quantity}</div>
                 </div>
               </div>
-              <span style={{ fontWeight: '600', fontFamily: theme.fontFamily }}>฿{(item.price * item.quantity).toLocaleString()}</span>
+              <span className='b1 text-color-primary' style={{ fontWeight: 'bold', fontFamily: theme.fontFamily }}>฿{(item.price * item.quantity).toLocaleString()}</span>
             </div>
           ))}
         </div>
 
         {/* 3. เลือกช่องทางจ่ายเงิน */}
-        <div style={{ backgroundColor: '#ffffff', padding: '20px', marginBottom: '20px', borderRadius: '4px', border: '1px solid #eee' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: '600', margin: '0 0 15px 0', color: '#333', fontFamily: theme.fontFamily }}>ช่องทางการชำระเงินอื่น</h3>
+        <div style={{ backgroundColor: '#ffffff', padding: '20px 20px 4px 20px', marginBottom: '20px', borderRadius: '4px', border: '1px solid #eee' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#333', fontFamily: theme.fontFamily }}>ช่องทางการชำระเงินอื่น</h3>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             
             {/* ช่องทางที่ 1: QR พร้อมเพย์ */}
@@ -151,11 +187,11 @@ export default function Payment({ cartItems, onPaymentSuccess }) {
                 </div>
                 <span style={{ fontSize: '15px', fontWeight: '500', color: '#222', fontFamily: theme.fontFamily }}>QR พร้อมเพย์</span>
               </div>
-              <input type="radio" name="pay" checked={method === 'qr'} onChange={() => setMethod('qr')} style={{ width: '22px', height: '22px', accentColor: '#FF4D2D', cursor: 'pointer' }} />
+              <input type="radio" name="pay" checked={method === 'qr'} onChange={() => setMethod('qr')} style={{ width: '22px', height: '22px', accentColor: '#B00000', cursor: 'pointer' }} />
             </label>
 
             {/* ช่องทางที่ 2: เก็บเงินปลายทาง */}
-            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderBottom: '1px solid #eee', cursor: 'pointer', ...textStyle }}>
+            {/* <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderBottom: '1px solid #eee', cursor: 'pointer', ...textStyle }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                 <div style={iconWrapperStyle}>
                   <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FF4D2D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -167,8 +203,8 @@ export default function Payment({ cartItems, onPaymentSuccess }) {
                 </div>
                 <span style={{ fontSize: '15px', fontWeight: '500', color: '#222', fontFamily: theme.fontFamily }}>เก็บเงินปลายทาง (COD)</span>
               </div>
-              <input type="radio" name="pay" checked={method === 'cod'} onChange={() => setMethod('cod')} style={{ width: '22px', height: '22px', accentColor: '#FF4D2D', cursor: 'pointer' }} />
-            </label>
+              <input type="radio" name="pay" checked={method === 'cod'} onChange={() => setMethod('cod')} style={{ width: '22px', height: '22px', accentColor: '#B00000', cursor: 'pointer' }} />
+            </label> */}
 
             {/* ช่องทางที่ 3: Mobile Banking */}
             <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 0', borderBottom: '1px solid #eee', cursor: 'pointer', ...textStyle }}>
@@ -181,7 +217,7 @@ export default function Payment({ cartItems, onPaymentSuccess }) {
                 </div>
                 <span style={{ fontSize: '15px', fontWeight: '500', color: '#222', fontFamily: theme.fontFamily }}>Mobile Banking</span>
               </div>
-              <input type="radio" name="pay" checked={method === 'bank'} onChange={() => setMethod('bank')} style={{ width: '22px', height: '22px', accentColor: '#FF4D2D', cursor: 'pointer' }} />
+              <input type="radio" name="pay" checked={method === 'bank'} onChange={() => setMethod('bank')} style={{ width: '22px', height: '22px', accentColor: '#B00000', cursor: 'pointer' }} />
             </label>
 
             {/* ช่องทางที่ 4: บัตรเครดิต/เดบิต */}
@@ -195,17 +231,17 @@ export default function Payment({ cartItems, onPaymentSuccess }) {
                 </div>
                 <span style={{ fontSize: '15px', fontWeight: '500', color: '#222', fontFamily: theme.fontFamily }}>บัตรเครดิต / บัตรเดบิต</span>
               </div>
-              <input type="radio" name="pay" checked={method === 'card'} onChange={() => setMethod('card')} style={{ width: '22px', height: '22px', accentColor: '#FF4D2D', cursor: 'pointer' }} />
+              <input type="radio" name="pay" checked={method === 'card'} onChange={() => setMethod('card')} style={{ width: '22px', height: '22px', accentColor: '#B00000', cursor: 'pointer' }} />
             </label>
 
           </div>
         </div>
 
         {/* ยอดสุทธิและปุ่มจ่ายเงิน */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '30px' }}>
+        <div className='bg-white p-4 br-primary' style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '30px' }}>
           <div style={{ fontSize: '20px', fontWeight: 'bold', fontFamily: theme.fontFamily }}>
-            <span style={{ color: '#000000', fontFamily: theme.fontFamily }}>ยอดรวมสุทธิ: </span>
-            <span style={{ color: theme.primary, fontFamily: theme.fontFamily }}>{totalAmount.toLocaleString()} THB</span>
+            <span className='me-2' style={{ color: '#000000', fontFamily: theme.fontFamily }}>ยอดรวมสุทธิ:</span>
+            <span style={{ color: theme.primary, fontFamily: theme.fontFamily }}>฿{totalAmount.toLocaleString()}</span>
           </div>
           <button 
             onClick={handlePayment}
