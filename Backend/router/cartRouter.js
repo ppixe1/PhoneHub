@@ -28,7 +28,6 @@ router.get('/', (req, res) => {
 // Add product into Cart
 router.post('/', (req, res) => {
   const token = req.headers.authorization.split(' ')[1];
-  console.log('RUNN')
   if (!token) return res.status(400).json({ msg: 'เกิดข้อผิดพลาด กรุณาเข้าสู่ระบบใหม่อีกครั้ง' });
 
   const data = jwt.verify(token, secret_key);
@@ -43,8 +42,6 @@ router.post('/', (req, res) => {
     model,
     img
   } = req.body;
-
-  console.log(product_id, quantity, color, storage, price, brand, model, img);
 
   if (!product_id || !quantity || !color || !storage || !price || !brand || !model || !img) return res.status(400).json({ msg: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
 

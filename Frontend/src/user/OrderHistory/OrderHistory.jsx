@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './OrderHistory.css';
 
 // ข้อมูลจำลองประวัติออเดอร์
@@ -69,6 +70,7 @@ function OrderTracking() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [modal, setModal] = useState('close');
+  const navigate = useNavigate();
 
   const FilteredOrders = mockOrders
     .filter((order) => {
@@ -97,14 +99,30 @@ function OrderTracking() {
     setSelectedOrder(null);
   }
 
+  const onBack = () => {
+    navigate('/home');
+  };
+
   return (
     <div className='w-100 bg-color-secondary'>
-      <div className='bg-color-primary text-white px-5 py-3 position-sticky top-0 z-3'>
-        <h2 className='ps-3' style={{ borderLeft:'12px solid #FFD129'}}>ประวัติการสั่งซื้อของฉัน</h2>
+      <div className='bg-color-primary text-white px-5 py-3 position-sticky top-0 z-3 d-flex align-items-center gap-3' style={{maxHeight:'60px'}}>
+        <div 
+          onClick={onBack} 
+          style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '4px', borderRadius: '50%', transition: 'background-color 0.2s' }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)'}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </div>
+
+        <h3 className='ps-3' style={{ borderLeft:'12px solid #FFD129'}}>ประวัติการสั่งซื้อของฉัน</h3>
       </div>
       
       <div className='w-75 h-auto mx-auto py-4'>
-        <div className='w-100 d-flex justify-content-between align-items-center bg-white br-primary position-sticky z-2' style={{top:'8%'}}>
+        <div className='w-100 d-flex justify-content-between align-items-center bg-white br-primary position-sticky z-2' style={{top:'6%'}}>
           <button className='w-100 py-3 b1 bg-white btn-order-history rounded-start-2' onClick={() => setFilter('all')} style={filter === 'all' ? { borderBottom:'2px solid #B00000', color:'#B00000'} : { borderBottom:'2px solid #e8e8e8'}} type='button'>ทั้งหมด</button>
           <button className='w-100 py-3 b1 bg-white btn-order-history' onClick={() => setFilter('shipping')} style={filter === 'shipping' ? { borderBottom:'2px solid #B00000', color:'#B00000'} : { borderBottom:'2px solid #e8e8e8'}} type='button'>อยู่ระหว่างการจัดส่ง</button>
           <button className='w-100 py-3 b1 bg-white btn-order-history' onClick={() => setFilter('delivered')} style={filter === 'delivered' ? { borderBottom:'2px solid #B00000', color:'#B00000'} : { borderBottom:'2px solid #e8e8e8'}} type='button'>จัดส่งสำเร็จ</button>

@@ -129,7 +129,7 @@ export default function Cart() {
   // ---------------------------------------------------------------------------
   return (
     <div style={{ fontFamily: theme.fontFamily, backgroundColor: theme.background, minHeight: '100vh' }}>
-      <div style={{ backgroundColor: theme.primary, color: '#fff', padding: '15px 5%', display: 'flex', alignItems: 'center', gap: '15px' }}>
+      <div className='position-sticky top-0 z-3' style={{ backgroundColor: theme.primary, color: '#fff', padding: '15px 5%', display: 'flex', alignItems: 'center', gap: '15px', maxHeight:'60px' }}>
         <div 
           onClick={onBack} 
           style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '4px', borderRadius: '50%', transition: 'background-color 0.2s' }}
@@ -142,9 +142,7 @@ export default function Cart() {
           </svg>
         </div>
         
-        <h1 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0, fontFamily: theme.fontFamily, lineHeight: 1 }}>
-          ตะกร้าสินค้า
-        </h1>
+        <h3 className='ps-3' style={{ borderLeft:'12px solid #FFD129'}}>ตะกร้าสินค้า</h3>
       </div>
 
       <div style={{ padding: '40px 5%', display: 'grid', gridTemplateColumns: hasSelectedItems ? '2fr 1fr' : '1fr', gap: '30px' }}>

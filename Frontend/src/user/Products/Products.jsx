@@ -63,7 +63,7 @@ export default function Products({
     setSelectedColor(null);
     setSelectedStorage(null);
     setSelectedPrice(null);
-    setSelectedQuantity(null);
+    setSelectedQuantity(1);
   }
 
   const onLogout = () => {
@@ -72,6 +72,10 @@ export default function Products({
 
   const onViewCart = () => {
     navigate('/cart')
+  }
+
+  const onViewOrderHistory = () => {
+    navigate('/order-history')
   }
 
   const onAddToCart = () => {
@@ -247,7 +251,7 @@ export default function Products({
   });
 
   const Header = () => (
-    <div
+    <div className='position-sticky top-0 z-3'
       style={{
         backgroundColor: theme.primary,
         color: '#fff',
@@ -259,7 +263,10 @@ export default function Products({
       }}
     >
       <div className='d-flex justify-content-start align-items-center object-fit-contain' style={{ width: '150px' }}>
-        <img className='w-100 h-100 object-fit-contain' src="/PhoneHubLOGO.png" />
+        <img className='w-100 h-100 object-fit-contain' src="/PhoneHubLOGO.png" style={{cursor:'pointer'}} onClick={() => {
+          navigate('/home')
+          window.scrollTo(0, 0);
+          }} />
       </div>
 
       <div
@@ -272,13 +279,16 @@ export default function Products({
         }}
       >
         <span
+          className='d-flex align-items-center'
           style={{ cursor: 'pointer', fontFamily: theme.fontFamily }}
           onClick={() => {
             clearSelected();
             handleClearFilter();
+            window.scrollTo(0, 0);
           }}
         >
-          หน้าแรก
+          <i className="bi bi-house me-2 fs-4"></i>
+          หน้าหลัก
         </span>
 
         <div
@@ -325,6 +335,10 @@ export default function Products({
               {cartCount}
             </span>
           )}
+        </div>
+
+        <div style={{ cursor: 'pointer' }} onClick={onViewOrderHistory}>
+          <i className="bi bi-clipboard2-minus fs-4"></i>
         </div>
 
         <div
@@ -411,7 +425,7 @@ export default function Products({
             style={{ fontSize: '14px', color: '#666', marginBottom: '20px', cursor: 'pointer', fontFamily: theme.fontFamily }}
             onClick={() => { clearSelected(); }}
           >
-            หน้าแรก &gt; {selectedProduct.name}
+            หน้าแรก &gt; {selectedProduct.brand} {selectedProduct.name}
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '40px', backgroundColor: '#fff', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
@@ -582,7 +596,35 @@ export default function Products({
                   fontFamily: theme.fontFamily,
                 }}
               >
-                {isOutOfStock ? 'สินค้าหมด' : !currentVariation ? 'กรุณาเลือกสีและความจุ' : 'เพิ่มลงตะกร้า'}
+                {isOutOfStock ? 
+                <span className='d-flex justify-content-center align-items-center gap-2'>
+                  <i class="bi bi-x-square"></i>
+                  สินค้าหมดชั่วคราว
+                </span>
+                : !currentVariation ? 
+                <span className='d-flex justify-content-center align-items-center gap-2'>
+                  <i className="bi bi-info-circle"></i>
+                  กรุณาเลือกสีและความจุ
+                </span>
+                : 
+                <span className='d-flex justify-content-center align-items-center gap-2'>
+                  <svg
+                    width='26'
+                    height='26'
+                    viewBox='0 0 24 24'
+                    fill='none'
+                    stroke='#ffffff'
+                    strokeWidth='2'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                  >
+                    <circle cx='9' cy='21' r='1' />
+                    <circle cx='20' cy='21' r='1' />
+                    <path d='M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6' />
+                  </svg>
+                  เพิ่มลงตะกร้า
+                </span>
+                }
               </button>
             </div>
           </div>
@@ -739,7 +781,10 @@ export default function Products({
             {filteredProducts.map((product) => (
               <div
                 key={product.id}
-                onClick={() => setSelectedProduct(product)}
+                onClick={() => {
+                  setSelectedProduct(product)
+                  window.scrollTo(0, 0);
+                }}
                 style={{ backgroundColor: '#fff', border: '1px solid #eee', padding: '15px', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', transition: 'transform 0.2s' }}
                 onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-4px)')}
                 onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
@@ -752,8 +797,8 @@ export default function Products({
                   {product.name}
                 </div>
                 <div style={{ display: 'flex', gap: '6px', alignItems: 'baseline' }}>
-                  <div style={{ fontSize: '15px', color: theme.primary, fontWeight: 'bold' }}>
-                    เริ่มต้น ฿{product.basePrice.toLocaleString()}
+                  <div style={{ fontSize: '20px', color: theme.primary, fontWeight: 'bold' }}>
+                    ฿{product.basePrice.toLocaleString()}
                   </div>
                 </div>
               </div>

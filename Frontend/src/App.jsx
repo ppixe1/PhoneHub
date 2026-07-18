@@ -11,6 +11,7 @@ import PageNotFound from './layout/PageNotFound'
 // ######### Pages #########
 import Login from './user/Login/Login'
 import Cart from './user/Cart/Cart'
+import OrderHistory from './user/OrderHistory/OrderHistory'
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path='/home' element={<HomeLayout />} />
         <Route path='/login' element={<Login />} />
         <Route path='/cart' element={<Cart />} />
+        <Route path='/order-history' element={<OrderHistory />} />
         <Route path='*' element={<PageNotFound />} />
       </Routes>
     </>
