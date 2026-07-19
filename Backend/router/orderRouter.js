@@ -57,6 +57,12 @@ router.get('/', async (req, res) => {
             shipping_address: row.shipping_address,
             customer_name: row.customer_name,
             customer_phone: row.customer_phone,
+            start_shipping_at: row.start_shipping_at,
+            shipper_name: row.shipper_name,
+            tracking_no: row.tracking_no,
+            delivery_person_name: row.delivery_person_name,
+            delivery_person_phone: row.delivery_person_phone,
+            delivered_at: row.delivered_at,
             items: [] // เตรียมกล่องเก็บสินค้าใน Order นี้
           };
         }
@@ -200,6 +206,31 @@ router.put('/delivered/:id', (req, res) => {
 
     res.status(200).json({ msg: 'อัพเดตสถานะสินค้าสําเร็จ!' });
   })
+})
+
+
+// UPDATE Status
+router.put('/:action/:id', (req, res) => {
+  const action = req.params.action;
+  const order_id = req.params.id;
+  if (!action) return res.status(400).json({ msg: 'เกิดข้อบกพร่อง' });
+  if (!order_id) return res.status(400).json({ msg: 'เกิดข้อบกพร่อง' });
+
+  let status;
+
+  if (action === 'cancel') {
+    status = 'canceled';
+  } else {
+    status = 'refunded';
+  }
+
+  db.query('UPDATE orders SET status = ? WHERE id = ?',
+    [status, order_id],
+    (err, result) => {
+      if (err) return res.status(500).json({ msg: 'Server Error' });
+      res.status(200).json({ msg: 'อัพเดตสถานะสินค้าสําเร็จ!' });
+    }
+  )
 })
 
 

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import './OrderHistory.css';
 
 // ข้อมูลจำลองประวัติออเดอร์
@@ -67,21 +68,42 @@ const mockOrders = [
 ];
 
 function OrderTracking() {
+  const [orders, setOrders] = useState([]);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [modal, setModal] = useState('close');
   const navigate = useNavigate();
 
-  const FilteredOrders = mockOrders
+  const getOrders = async () => {
+    const token = sessionStorage.getItem('token');
+    if (!token) return alert('คุณไม่มี Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
+
+    try {
+      const res = await axios.get('http://localhost:3000/order', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      setOrders(res.data.orders);
+    } catch (error) {
+      console.error('Error getting orders:', error);
+    }
+  }
+
+  useEffect(() => {
+    getOrders();
+  }, []);
+
+  const FilteredOrders = orders
     .filter((order) => {
       if (filter === 'all') return true;
       return order.status === filter;
     })
     .filter((order) => {
       const searchTerm = search.toLowerCase();
-      const matchOrderId = order.id.toLowerCase().includes(searchTerm);
+      const matchOrderId = String(order.id).toLowerCase().includes(searchTerm);
       const matchProductModel = order.items.some((item) =>
-        item.ProductModel.toLowerCase().includes(searchTerm)
+        item.product_model.toLowerCase().includes(searchTerm)
       );
     return matchOrderId || matchProductModel;
   });
@@ -102,6 +124,16 @@ function OrderTracking() {
   const onBack = () => {
     navigate('/home');
   };
+
+  const updateStatus = (action, order_id) => {
+    axios.put(`http://localhost:3000/order/${action}/${order_id}`)
+    .then(() => {
+      getOrders();
+    })
+    .catch((error) => {
+      console.error('Error updating order:', error);
+    });
+  }
 
   return (
     <div className='w-100 bg-color-secondary'>
@@ -158,22 +190,22 @@ function OrderTracking() {
                 <div key={index} className='w-100 d-flex justify-content-between align-items-center py-2' style={{cursor:'pointer', borderBottom:'1px solid #e8e8e8'}} onClick={() => openModal(order)}>
                   <div className='w-75 d-flex flex-column justify-content-between align-items-start'>
                     <div className='w-100 d-flex justify-content-start align-items-end b1'>
-                      <p className='mb-0'>{item.ProductBrand}</p>
+                      <p className='mb-0'>{item.product_brand}</p>
                       <i className="bi bi-patch-check-fill text-color-primary ms-2" title='เครื่องหมายการันตีจาก PhoneHub'></i>
                     </div>
                     <div className='w-100 d-flex justify-content-between align-items-start gap-2'>
                       <div className='bg-white d-flex justify-content-center align-items-center' style={{width:'100px', height:'100px'}}>
-                        <img className='w-100 h-100 object-fit-contain' src={item.ProductImg} />
+                        <img className='w-100 h-100 object-fit-contain' src={JSON.parse(item.product_img)} />
                       </div>
                       <div className='flex-grow-1 d-flex flex-column justify-content-start align-items-start overflow-hidden'>
-                        <p className='w-100 mb-0 b1 text-nowrap overflow-hidden' style={{textOverflow:'ellipsis'}}>{item.ProductModel}</p>
-                        <p className='w-100 mb-0 b2 text-secondary text-nowrap overflow-hidden' style={{textOverflow:'ellipsis'}}>ตัวเลือกสินค้า: {item.Variation}</p>
-                        <p className='w-100 mb-0 b1'>x{item.Quantity}</p>
+                        <p className='w-100 mb-0 b1 text-nowrap overflow-hidden' style={{textOverflow:'ellipsis'}}>{item.product_model}</p>
+                        <p className='w-100 mb-0 b2 text-secondary text-nowrap overflow-hidden' style={{textOverflow:'ellipsis'}}>สี: {JSON.parse(item.variation)[0].color} ความจุ: {JSON.parse(item.variation)[0].storage}</p>
+                        <p className='w-100 mb-0 b1'>x{item.quantity}</p>
                       </div>
                     </div>
                   </div>
                   <div className='w-25 d-flex justify-content-end align-items-center'>
-                    <p className='mb-0 b1 text-color-primary'>&#3647;{item.Price}</p>
+                    <p className='mb-0 b1 text-color-primary'>&#3647;{Number(item.price_at_purchase).toLocaleString()}</p>
                   </div>
                 </div>
               ))}
@@ -181,23 +213,24 @@ function OrderTracking() {
               <div className='w-100 d-flex flex-column justify-content-end align-items-center mt-2'>
                 { order.status !== 'refunded' && 
                   <div className='w-100 h-50 d-flex justify-content-end align-items-center py-4'>
-                    <p className='b1 mb-0'>ยอดรวมสุทธิ: <span className='ms-2 text-color-primary' style={{fontSize:'24px'}}>&#3647;{order.total}</span></p>
+                    <p className='b1 mb-0'>ยอดรวมสุทธิ: <span className='ms-2 text-color-primary' style={{fontSize:'24px'}}>&#3647;{Number(order.total_price).toLocaleString()}</span></p>
                   </div> 
                 }
                 <div className='w-100 h-50 d-flex justify-content-between align-items-end'>
-                  <p className='b1 mb-0'>รหัสคำสั่งซื้อ: {order.id}</p>
+                  <p className='b1 mb-0'>รหัสคำสั่งซื้อ: ORD-{order.id.toString().padStart(6, '0')}</p>
 
                   {order.status === 'delivered' ? (
                     <div>
-                      <button className='btn btn-outline-secondary me-2' type='button'>ซื้ออีกครั้ง</button>
-                      <button className='btn btn-outline-secondary' type='button'>ขอคืนเงิน</button>
+                      {/* <button className='btn btn-outline-secondary me-2' type='button'>ซื้ออีกครั้ง</button> */}
+                      <button className='btn btn-outline-secondary' type='button' onClick={() => updateStatus('refund', order.id)}>ขอคืนเงิน</button>
                     </div>
                   ) : order.status === 'shipping' ? (
-                    <button className='btn btn-outline-secondary' type='button'>ยกเลิก</button>
+                    <button className='btn btn-outline-secondary' type='button' onClick={() => updateStatus('cancel', order.id)}>ยกเลิก</button>
                   ) : order.status === 'canceled' ? (
-                    <button className='btn btn-outline-secondary' type='button'>ซื้ออีกครั้ง</button>
+                    // <button className='btn btn-outline-secondary' type='button'>ซื้ออีกครั้ง</button>
+                    ''
                   ) : (
-                    <p className='b1 mb-0'>เงินคืนทั้งหมด: <span className='ms-2 text-color-primary' style={{fontSize:'24px'}}>&#3647;{order.total}</span></p>
+                    <p className='b1 mb-0'>เงินคืนทั้งหมด: <span className='ms-2 text-color-primary' style={{fontSize:'24px'}}>&#3647;{Number(order.total_price).toLocaleString()}</span></p>
                   )}
                 </div>
               </div>
@@ -209,19 +242,19 @@ function OrderTracking() {
 
       {/* ########### Modal ########### */}
       {selectedOrder && (
-        <div className={`modal-follow-order-${modal}`}>
-          <div key={selectedOrder.id} className='w-50 h-auto mx-auto d-flex flex-column justify-content-between align-items-center bg-white br-modal p-4'>
+        <div className={`modal-follow-order-${modal}`} onClick={closeModal}>
+          <div key={selectedOrder.id} onClick={e => e.stopPropagation()} className='modal-con w-50 h-auto mx-auto d-flex flex-column justify-content-between align-items-center bg-white br-modal p-4'>
             <div className='w-100 d-flex justify-content-between align-items-center pb-2' style={{borderBottom:'1px solid #e8e8e8'}}>
               <div className='flex-grow-1 d-flex justify-content-start align-items-center'>
                 <div className='bg-white d-flex justify-content-center align-items-center me-2' style={{width:'50px', height:'50px'}}>
-                  <img className='w-100 h-100 object-fit-contain' src={selectedOrder.items[0].ProductImg} />
+                  <img className='w-100 h-100 object-fit-contain' src={JSON.parse(selectedOrder.items[0].product_img)} />
                 </div>
-                <h3 className='mb-0 text-color-primary d-flex justify-content-start align-items-center gap-3'>{selectedOrder.items[0].ProductModel}
-                  {(selectedOrder.items).length > 1 && <span className='rounded-pill px-2 py-1 b3 bg-warning text-black'>+อีก {(selectedOrder.items).length - 1} รายการ</span>}
+                <h3 className='mb-0 text-color-primary d-flex justify-content-start align-items-center gap-3'>{selectedOrder.items[0].product_model}
+                  {(selectedOrder.items).length > 1 && <span className='rounded-pill px-2 py-1 b3 bg-warning text-black' title={selectedOrder.items.map((item) => `${item.product_brand} ${item.product_model} x${item.quantity}\n`)}>+อีก {(selectedOrder.items).length - 1} รายการ</span>}
                 </h3>
               </div>
               <div className='d-flex justify-content-end align-items-center gap-4'>
-                <p className='b2 mb-0'>รหัสคำสั่งซื้อ: {selectedOrder.id}</p>
+                <p className='b2 mb-0'>รหัสคำสั่งซื้อ: ORD-{selectedOrder.id.toString().padStart(6, '0')}</p>
                 <i className="bi bi-x btn btn-danger p-0 px-2 fs-2" onClick={closeModal}></i>
               </div>
             </div>
@@ -236,22 +269,22 @@ function OrderTracking() {
                     <div className='d-flex flex-column justify-content-center align-items-center'>
                       <i className={`bi bi-receipt fs-1 rounded-circle status${selectedOrder.status === 'delivered' ? '-' : selectedOrder.status === 'shipping' ? '-' : selectedOrder.status === 'paid' ? '-' : selectedOrder.status === 'pending' ? '-' : '-not-'}success`}></i>
                       <p className='b1 mb-0'>สั่งซื้อสินค้าแล้ว</p>
-                      <p className='b2 mb-0'>{selectedOrder.status === 'delivered' ? selectedOrder.createdAt : selectedOrder.status === 'shipping' ? selectedOrder.createdAt : selectedOrder.status === 'paid' ? selectedOrder.createdAt : selectedOrder.status === 'pending' ? selectedOrder.createdAt : 'กำลังดำเนินการ'}</p>
+                      <p className='b2 mb-0'>{selectedOrder.status === 'delivered' ? selectedOrder.created_at : selectedOrder.status === 'shipping' ? selectedOrder.created_at : selectedOrder.status === 'paid' ? selectedOrder.created_at : selectedOrder.status === 'pending' ? selectedOrder.created_at : 'กำลังดำเนินการ'}</p>
                     </div>
                     <div className='d-flex flex-column justify-content-center align-items-center'>
                       <i className={`bi bi-cash-stack fs-1 rounded-circle status${selectedOrder.status === 'delivered' ? '-' : selectedOrder.status === 'shipping' ? '-' : selectedOrder.status === 'paid' ? '-' : '-not-'}success`}></i>
                       <p className='b1 mb-0'>ชำระเงินแล้ว</p>
-                      <p className='b2 mb-0'>{selectedOrder.status === 'delivered' ? selectedOrder.paidAt : selectedOrder.status === 'shipping' ? selectedOrder.paidAt : selectedOrder.status === 'paid' ? selectedOrder.paidAt : 'กำลังดำเนินการ'}</p>
+                      <p className='b2 mb-0'>{selectedOrder.status === 'delivered' ? selectedOrder.paid_at : selectedOrder.status === 'shipping' ? selectedOrder.paid_at : selectedOrder.status === 'paid' ? selectedOrder.paid_at : 'กำลังดำเนินการ'}</p>
                     </div>
                     <div className='d-flex flex-column justify-content-center align-items-center'>
                       <i className={`bi bi-truck fs-1 rounded-circle status${selectedOrder.status === 'delivered' ? '-' : selectedOrder.status === 'shipping' ? '-' : '-not-'}success`}></i>
                       <p className='b1 mb-0'>อยู่ระหว่างการจัดส่ง</p>
-                      <p className='b2 mb-0'>{selectedOrder.status === 'delivered' ? selectedOrder.startShippingAt : selectedOrder.status === 'shipping' ? selectedOrder.startShippingAt : 'กำลังดำเนินการ'}</p>
+                      <p className='b2 mb-0'>{selectedOrder.status === 'delivered' ? selectedOrder.start_shipping_at : selectedOrder.status === 'shipping' ? selectedOrder.start_shipping_at : 'กำลังดำเนินการ'}</p>
                     </div>
                     <div className='d-flex flex-column justify-content-center align-items-center'>
                       <i className={`bi bi-geo-alt fs-1 rounded-circle status${selectedOrder.status === 'delivered' ? '-' : '-not-'}success`}></i>
                       <p className='b1 mb-0'>จัดส่งสำเร็จ</p>
-                      <p className='b2 mb-0'>{selectedOrder.status === 'delivered' ? selectedOrder.deliveredAt : 'กำลังดำเนินการ'}</p>
+                      <p className='b2 mb-0'>{selectedOrder.status === 'delivered' ? selectedOrder.delivered_at : 'กำลังดำเนินการ'}</p>
                     </div>
                   </div>
                 </div>
@@ -261,16 +294,16 @@ function OrderTracking() {
             <div className='w-100 d-flex justify-content-between align-items-start pt-2'>
               <div className='w-50 d-flex flex-column justify-content-start align-items-start pe-1'>
                 <h3 className='text-color-primary'>Delivery Address</h3>
-                <p className="b1 mb-0">{selectedOrder.customerName} {selectedOrder.customerPhone}</p>
+                {/* <p className="b1 mb-0">{selectedOrder.customer_name} {selectedOrder.customer_phone}</p> */}
                 <p className="b1 mb-0">
-                  {selectedOrder.deliveryAddress}
+                  {selectedOrder.shipping_address}
                 </p>
               </div>
               <div className='w-50 d-flex flex-column justify-content-start align-items-end ps-1'>
-                <h3 className='text-color-primary'>{selectedOrder.shipperName}</h3>
-                <p className="b2 mb-0">{selectedOrder.trackNo}</p>
-                <p className="b1 mb-0">พนักงานส่งมอบ: {selectedOrder.deliveryManName}, {selectedOrder.deliveryManPhone}</p>
-                <p className='b1 mb-0'>ยอดรวมสุทธิ: <span className='ms-2 text-color-primary' style={{fontSize:'24px'}}>&#3647;{selectedOrder.total}</span></p>
+                <h3 className='text-color-primary'>{selectedOrder.shipper_name}</h3>
+                <p className="b2 mb-0">{selectedOrder.tracking_no}</p>
+                <p className="b1 mb-0">พนักงานส่งมอบ: {selectedOrder.delivery_person_name}, {selectedOrder.delivery_person_phone}</p>
+                <p className='b1 mb-0'>ยอดรวมสุทธิ: <span className='ms-2 text-color-primary' style={{fontSize:'24px'}}>&#3647;{Number(selectedOrder.total_price).toLocaleString()}</span></p>
               </div>
             </div>
           </div>

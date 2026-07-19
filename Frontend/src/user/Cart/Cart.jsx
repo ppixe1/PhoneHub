@@ -187,7 +187,7 @@ export default function Cart() {
                   <button className='btn btn-outline-secondary' onClick={() => updateQuantity(item.id, "-")} style={{ padding: '2px 8px', fontFamily: theme.fontFamily, cursor: 'pointer' }}>-</button>
                   <span style={{ fontSize: '14px', fontFamily: theme.fontFamily, width: '20px', textAlign: 'center' }}>{item.quantity}</span>
                   <button className='btn btn-outline-secondary' onClick={() => updateQuantity(item.id, "+")} style={{ padding: '2px 8px', fontFamily: theme.fontFamily, cursor: 'pointer' }}>+</button>
-                  <button onClick={() => onRemove(item.id)} style={{ marginLeft: '15px', color: 'red', border: 'none', background: 'none', cursor: 'pointer', fontSize: '12px', fontFamily: theme.fontFamily }}>ลบ</button>
+                  <button onClick={() => onRemove(item.id)} style={{ marginLeft: '15px', color: '#B00000', border: 'none', background: 'none', cursor: 'pointer', fontSize: '12px', fontFamily: theme.fontFamily }}><i className="bi bi-trash"></i></button>
                 </div>
               </div>
             ))
