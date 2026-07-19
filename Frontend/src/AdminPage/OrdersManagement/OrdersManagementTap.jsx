@@ -1,9 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ChevronDown, ListFilter, CheckCircle2, Clock, Package, Truck } from 'lucide-react';
+import { Search, ChevronDown, ListFilter, CheckCircle2, Clock, Package, Truck, XCircle, RefreshCw } from 'lucide-react';
 import { getOrders, updateOrderStatus } from '../services/api';
+import axios from 'axios';
+
+// 1. แผนผังสำหรับจัดการแปลงค่า Status ระหว่างหน้าบ้าน (ไทย) และหลังบ้าน DB (อังกฤษ)
+const STATUS_MAP = {
+  'pending': { label: 'รอดำเนินการ', bg: '#FFF8E1', text: '#F57F17', icon: <Clock size={16} color="#F57F17" /> },
+  'paid': { label: 'ชำระเงินแล้ว', bg: '#E8F5E9', text: '#2E7D32', icon: <CheckCircle2 size={16} color="#2E7D32" /> },
+  'shipping': { label: 'กำลังเตรียมจัดส่ง', bg: '#E3F2FD', text: '#1565C0', icon: <Package size={16} color="#1565C0" /> },
+  'delivered': { label: 'จัดส่งแล้ว', bg: '#F3E5F5', text: '#7B1FA2', icon: <Truck size={16} color="#7B1FA2" /> },
+  'canceled': { label: 'ยกเลิกแล้ว', bg: '#FFEBEE', text: '#C62828', icon: <XCircle size={16} color="#C62828" /> },
+  'refunded': { label: 'คืนเงินแล้ว', bg: '#ECEFF1', text: '#37474F', icon: <RefreshCw size={16} color="#37474F" /> }
+};
 
 export default function OrdersManagementTap() {
- 
   const [orders, setOrders] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('สถานะทั้งหมด');
@@ -15,13 +25,16 @@ export default function OrdersManagementTap() {
   const [isModalStatusOpen, setIsModalStatusOpen] = useState(false);
 
   useEffect(() => {
-    let mounted = true;
     const loadOrders = async () => {
       setIsLoading(true);
       setFetchError('');
       try {
         const data = await getOrders();
-        if (mounted) setOrders(data || []);
+        if (mounted) {
+          // ถ้า data ส่งมาเป็น Object { orders: [...] } ให้แตกหยิบเอาเฉพาะ array ด้านใน
+          const ordersArray = data && data.orders ? data.orders : (Array.isArray(data) ? data : []);
+          setOrders(ordersArray);
+        }
       } catch (err) {
         console.error(err);
         if (mounted) setFetchError('ไม่สามารถโหลดคำสั่งซื้อได้');
@@ -29,6 +42,7 @@ export default function OrdersManagementTap() {
         if (mounted) setIsLoading(false);
       }
     };
+    let mounted = true;
 
     loadOrders();
     return () => { mounted = false; };
@@ -36,32 +50,29 @@ export default function OrdersManagementTap() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [modalStatus, setModalStatus] = useState('');
+  const [modalStatus, setModalStatus] = useState(''); // จะเก็บเป็นค่าภาษาอังกฤษ (DB Value)
   const [showConfirm, setShowConfirm] = useState(false);
 
+  // ฟังก์ชันดึงสไตล์ของป้ายสถานะ
   const getStatusStyle = (status) => {
-    switch (status) {
-      case 'เสร็จสิ้น': return { bg: '#E8F5E9', text: '#2E7D32' };
-      case 'รอดำเนินการ': return { bg: '#FFF8E1', text: '#F57F17' };
-      case 'กำลังเตรียมจัดส่ง': return { bg: '#E3F2FD', text: '#1565C0' };
-      case 'จัดส่งแล้ว': return { bg: '#F3E5F5', text: '#7B1FA2' };
-      default: return { bg: '#F8F9FA', text: '#6C757D' };
-    }
+    return STATUS_MAP[status] || { bg: '#F8F9FA', text: '#6C757D', label: status };
   };
 
+  // รายการสถานะสำหรับตัวกรอง (หน้าบ้าน)
   const statusOptions = [
     { value: 'สถานะทั้งหมด', label: 'สถานะทั้งหมด', icon: <ListFilter size={16} color="#6C757D" /> },
-    { value: 'รอดำเนินการ', label: 'รอดำเนินการ', icon: <Clock size={16} color="#F57F17" /> },
-    { value: 'กำลังเตรียมจัดส่ง', label: 'กำลังเตรียมจัดส่ง', icon: <Package size={16} color="#1565C0" /> },
-    { value: 'จัดส่งแล้ว', label: 'จัดส่งแล้ว', icon: <Truck size={16} color="#7B1FA2" /> },
-    { value: 'เสร็จสิ้น', label: 'เสร็จสิ้น', icon: <CheckCircle2 size={16} color="#2E7D32" /> }
+    ...Object.keys(STATUS_MAP).map(key => ({
+      value: key,
+      label: STATUS_MAP[key].label,
+      icon: STATUS_MAP[key].icon
+    }))
   ];
 
   const modalStatusOptions = statusOptions.filter(opt => opt.value !== 'สถานะทั้งหมด');
 
   const handleInspectClick = (order) => {
     setSelectedOrder(order);
-    setModalStatus(order.status);
+    setModalStatus(order.status); // เก็บสถานะภาษาอังกฤษจาก DB ลงตัวแปรเลือก
     setIsModalOpen(true);
     setShowConfirm(false);
     setIsModalStatusOpen(false);
@@ -73,7 +84,8 @@ export default function OrdersManagementTap() {
     setIsSaving(true);
 
     try {
-      const updatedOrder = await updateOrderStatus(selectedOrder.id, modalStatus);
+      // ส่งสถานะที่เป็นภาษาอังกฤษไปยัง API หลังบ้าน
+      const updatedOrder = await updateOrderStatus(modalStatus, selectedOrder.id);
       setOrders((prevOrders) =>
         prevOrders.map((ord) =>
           ord.id === selectedOrder.id ? { ...ord, status: updatedOrder?.status ?? modalStatus } : ord
@@ -81,6 +93,7 @@ export default function OrdersManagementTap() {
       );
       setIsModalOpen(false);
       setSelectedOrder(null);
+      alert('บันทึกสถานะคำสั่งซื้อสําเร็จ');
     } catch (err) {
       console.error(err);
       window.alert('ไม่สามารถบันทึกสถานะคำสั่งซื้อได้ โปรดลองอีกครั้ง');
@@ -89,14 +102,39 @@ export default function OrdersManagementTap() {
     }
   };
 
-  const filteredOrders = orders.filter(order => {
-    const firstItemName = order.items && order.items.length > 0 ? order.items[0].name : '';
+  // ปลอดภัยไว้ก่อน: ตรวจสอบว่าเป็น Array จริง ๆ ก่อนใช้ฟังก์ชัน .filter
+  const safeOrders = Array.isArray(orders) ? orders : [];
+
+  const filteredOrders = safeOrders.filter(order => {
+    // ป้องกันกรณีที่ order.items ถูกบันทึกมาเป็นรูปแบบ String JSON
+    let itemsArray = [];
+    try {
+      itemsArray = typeof order.items === 'string' ? JSON.parse(order.items) : (order.items || []);
+    } catch (e) {
+      itemsArray = [];
+    }
+
+    const firstItemName = itemsArray.length > 0 ? (itemsArray[0].product_model || itemsArray[0].name || '') : '';
+    
+    // ตรวจสอบเงื่อนไขค้นหาข้อความ
     const matchesSearch = String(order.id).toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (order.customer && order.customer.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                          (order.customer_name && order.customer_name.toLowerCase().includes(searchTerm.toLowerCase())) ||
                           firstItemName.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // ตรวจสอบเงื่อนไขคัดกรองสถานะ
     const matchesStatus = statusFilter === 'สถานะทั้งหมด' || order.status === statusFilter;
+    
     return matchesSearch && matchesStatus;
   });
+
+  // ฟังก์ชันช่วยสำหรับการ parse ข้อมูล JSON ใน Render
+  const safeParseJSON = (jsonString, fallback) => {
+    try {
+      return jsonString ? JSON.parse(jsonString) : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  };
 
   return (
     <div className="animate-fade-in" style={{ paddingBottom: '2rem' }}>
@@ -111,7 +149,7 @@ export default function OrdersManagementTap() {
 
       <div className="px-1">
         <div className="d-flex flex-column flex-sm-row gap-3 mb-4 w-100">
-          <div className="position-relative" style={{ minWidth: '180px' }}>
+          <div className="position-relative" style={{ minWidth: '200px' }}>
             <div 
               className="d-flex align-items-center justify-content-between bg-white border shadow-sm user-select-none"
               style={{ borderRadius: '8px', padding: '10px 16px', cursor: 'pointer', borderColor: isFilterOpen ? '#B00000' : '#e9ecef' }}
@@ -119,7 +157,9 @@ export default function OrdersManagementTap() {
             >
               <div className="d-flex align-items-center gap-2">
                 {statusOptions.find(opt => opt.value === statusFilter)?.icon}
-                <span style={{ fontSize: '14px', fontWeight: '600', color: '#495057' }}>{statusFilter}</span>
+                <span style={{ fontSize: '14px', fontWeight: '600', color: '#495057' }}>
+                  {statusOptions.find(opt => opt.value === statusFilter)?.label}
+                </span>
               </div>
               <ChevronDown size={16} style={{ color: '#6c757d', transform: isFilterOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s ease' }} />
             </div>
@@ -161,6 +201,8 @@ export default function OrdersManagementTap() {
           </div>
         </div>
 
+        {fetchError && <div className="alert alert-danger shadow-sm mb-4">{fetchError}</div>}
+
         <div className="bg-white rounded-4 shadow-sm border overflow-hidden" style={{ borderColor: '#e9ecef' }}>
           <div className="table-responsive">
             <table className="table table-hover align-middle m-0" style={{ minWidth: '1000px' }}>
@@ -180,25 +222,33 @@ export default function OrdersManagementTap() {
                   <tr><td colSpan="7" className="text-center text-muted p-5">กำลังโหลดข้อมูลคำสั่งซื้อ...</td></tr>
                 ) : filteredOrders.length > 0 ? (
                   filteredOrders.map((order) => {
-                    const hasItems = order.items && order.items.length > 0;
-                    const firstItem = hasItems ? order.items[0] : null;
-                    const extraItemsCount = hasItems ? order.items.length - 1 : 0;
+                    const orderItems = typeof order.items === 'string' ? safeParseJSON(order.items, []) : (order.items || []);
+                    const hasItems = orderItems.length > 0;
+                    const firstItem = hasItems ? orderItems[0] : null;
+                    const extraItemsCount = hasItems ? orderItems.length - 1 : 0;
                     const statusStyle = getStatusStyle(order.status);
+
+                    // แก้การพังตอนแปลงรูปภาพและส่วนย่อยของ Variant ของชิ้นแรก
+                    const firstItemImg = firstItem ? safeParseJSON(firstItem.product_img, '') : '';
+                    const firstItemVariation = firstItem ? safeParseJSON(firstItem.variation, [{}])[0] : {};
 
                     return (
                       <tr key={order.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
-                        <td className="text-center fw-bold" style={{ fontSize: '14px' }}>ORD-{order.id}</td>
-                        <td className="text-center text-muted" style={{ fontSize: '13px' }}>{order.date}</td>
+                        <td className="text-center fw-bold" style={{ fontSize: '14px' }}>ORD-{order.id.toString().padStart(6, '0')}</td>
+                        <td className="text-center text-muted" style={{ fontSize: '13px' }}>{order.created_at}</td>
                         <td className="py-3">
                           {firstItem ? (
                             <div className="d-flex align-items-center gap-3">
                               <div className="bg-light d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '48px', height: '48px', borderRadius: '8px', border: '1px solid #e9ecef', overflow: 'hidden' }}>
-                                <img src={firstItem.image} alt={firstItem.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                <img src={firstItemImg} alt={firstItem.product_model} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                               </div>
                               <div style={{ minWidth: 0 }}>
-                                <div className="fw-bold text-dark mb-1" style={{ fontSize: '14px' }}>{firstItem.name}</div>
+                                <div className="fw-bold text-dark mb-1" style={{ fontSize: '14px' }}>{firstItem.product_model}</div>
                                 <div className="text-muted text-truncate" style={{ fontSize: '12px' }}>
-                                  {firstItem.storage && `${firstItem.storage}`} {firstItem.color && ` • สี ${firstItem.color}`}
+                                  สี: {firstItemVariation.color || '-'}, ความจุ: {firstItemVariation.storage || '-'}
+                                </div>
+                                <div>
+                                  <span className="text-muted" style={{ fontSize: '12px' }}>x{firstItem.quantity}</span>
                                 </div>
                                 {extraItemsCount > 0 && (
                                   <button
@@ -216,16 +266,16 @@ export default function OrdersManagementTap() {
                             <span className="text-muted">ไม่มีรายการสินค้า</span>
                           )}
                         </td>
-                        <td className="text-center fw-medium text-dark" style={{ fontSize: '14px' }}>{order.customer}</td>
+                        <td className="text-center fw-medium text-dark" style={{ fontSize: '14px' }}>{order.customer_name}</td>
                         <td className="text-center fw-bold" style={{ fontSize: '15px', color: '#B00000' }}>
-                          {String(order.price).replace('.-', '')} .-
+                          {String(Number(order.total_price).toLocaleString()).replace('.-', '')} .-
                         </td>
                         <td className="text-center">
                           <span 
                             className="badge rounded-pill d-inline-flex align-items-center justify-content-center gap-1"
                             style={{ backgroundColor: statusStyle.bg, color: statusStyle.text, padding: '6px 12px', fontSize: '12px', fontWeight: '600' }}
                           >
-                            <span style={{ fontSize: '8px' }}>●</span> {order.status}
+                            <span style={{ fontSize: '8px' }}>●</span> {statusStyle.label}
                           </span>
                         </td>
                         <td className="text-center">
@@ -257,8 +307,8 @@ export default function OrdersManagementTap() {
             <div className="bg-light rounded-4 shadow-lg d-flex flex-column overflow-hidden" style={{ width: '100%', maxWidth: '600px', maxHeight: '90vh' }}>
               <div className="text-white p-4 d-flex justify-content-between align-items-start" style={{ backgroundColor: '#B00000' }}>
                 <div>
-                  <h3 className="fw-bold m-0 mb-2" style={{ fontSize: '18px' }}>รายละเอียดคำสั่งซื้อ <span style={{ color: '#FFD129' }}>ORD-{selectedOrder.id}</span></h3>
-                  <p className="m-0" style={{ fontSize: '12px', color: 'rgba(255, 209, 41, 0.8)' }}>สั่งซื้อเมื่อ: {selectedOrder.date}</p>
+                  <h3 className="fw-bold m-0 mb-2" style={{ fontSize: '18px' }}>รายละเอียดคำสั่งซื้อ <span style={{ color: '#FFD129' }}>ORD-{selectedOrder.id.toString().padStart(6, '0')}</span></h3>
+                  <p className="m-0" style={{ fontSize: '12px', color: 'rgba(255, 209, 41, 0.8)' }}>สั่งซื้อเมื่อ: {selectedOrder.created_at}</p>
                 </div>
                 <button onClick={() => setIsModalOpen(false)} className="btn-close btn-close-white"></button>
               </div>
@@ -268,7 +318,7 @@ export default function OrdersManagementTap() {
                   <div className="col-12 col-md-6">
                     <div className="bg-white p-4 rounded-4 border shadow-sm h-100" style={{ borderColor: '#e9ecef' }}>
                       <span className="fw-bold text-muted d-block mb-2" style={{ fontSize: '13px' }}>ข้อมูลลูกค้า / จัดส่ง</span>
-                      <h4 className="fw-bold m-0 mb-2 text-dark" style={{ fontSize: '15px' }}>{selectedOrder.customer}</h4>
+                      <h4 className="fw-bold m-0 mb-2 text-dark" style={{ fontSize: '15px' }}>{selectedOrder.customer_name}</h4>
                     </div>
                   </div>
 
@@ -283,7 +333,9 @@ export default function OrdersManagementTap() {
                         >
                           <div className="d-flex align-items-center gap-2">
                             {modalStatusOptions.find(opt => opt.value === modalStatus)?.icon}
-                            <span style={{ fontSize: '14px', fontWeight: '600', color: '#212529' }}>{modalStatus || 'เลือกสถานะ'}</span>
+                            <span style={{ fontSize: '14px', fontWeight: '600', color: '#212529' }}>
+                              {modalStatusOptions.find(opt => opt.value === modalStatus)?.label || 'เลือกสถานะ'}
+                            </span>
                           </div>
                           <ChevronDown size={16} style={{ color: '#6c757d', transform: isModalStatusOpen ? 'rotate(180deg)' : 'none' }} />
                         </div>
@@ -321,30 +373,35 @@ export default function OrdersManagementTap() {
                         </tr>
                       </thead>
                       <tbody>
-                        {selectedOrder.items && selectedOrder.items.map((item, index) => (
-                          <tr key={index} style={{ borderBottom: '1px solid #f8f9fa' }}>
-                            <td className="p-3">
-                              <div className="d-flex align-items-center gap-3">
-                                <div className="bg-light d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '48px', height: '48px', borderRadius: '8px', border: '1px solid #e9ecef', overflow: 'hidden' }}>
-                                  <img src={item.image} alt={item.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                                </div>
-                                <div>
-                                  <div className="fw-bold text-dark" style={{ fontSize: '14px' }}>{item.name}</div>
-                                  <div className="text-muted" style={{ fontSize: '12px' }}>
-                                    {item.storage && `ความจุ: ${item.storage}`} {item.color && `| สี: ${item.color}`}
+                        {(typeof selectedOrder.items === 'string' ? safeParseJSON(selectedOrder.items, []) : (selectedOrder.items || [])).map((item, index) => {
+                          const itemImg = safeParseJSON(item.product_img, '');
+                          const itemVariation = safeParseJSON(item.variation, [{}])[0];
+
+                          return (
+                            <tr key={index} style={{ borderBottom: '1px solid #f8f9fa' }}>
+                              <td className="p-3">
+                                <div className="d-flex align-items-center gap-3">
+                                  <div className="bg-light d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '48px', height: '48px', borderRadius: '8px', border: '1px solid #e9ecef', overflow: 'hidden' }}>
+                                    <img src={itemImg} alt={item.product_model} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                  </div>
+                                  <div>
+                                    <div className="fw-bold text-dark" style={{ fontSize: '14px' }}>{item.product_model}</div>
+                                    <div className="text-muted" style={{ fontSize: '12px' }}>
+                                      สี: {itemVariation.color || '-'}, ความจุ: {itemVariation.storage || '-'}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            </td>
-                            <td className="p-3 text-center text-muted" style={{ fontSize: '14px' }}>{item.qty} ชิ้น</td>
-                            <td className="p-3 text-end fw-bold text-dark" style={{ fontSize: '14px' }}>{String(item.price).replace('.-', '')} บาท</td>
-                          </tr>
-                        ))}
+                              </td>
+                              <td className="p-3 text-center text-muted" style={{ fontSize: '14px' }}>{item.quantity}</td>
+                              <td className="p-3 text-end fw-bold text-dark" style={{ fontSize: '14px' }}>{String(Number(item.price_at_purchase).toLocaleString()).replace('.-', '')} บาท</td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                     <div className="bg-light p-4 d-flex justify-content-between align-items-center border-top">
                       <span className="fw-bold text-dark">ยอดสุทธิรวมทั้งหมด:</span>
-                      <span className="fw-bold" style={{ fontSize: '18px', color: '#B00000' }}>{String(selectedOrder.price).replace('.-', '')} บาท</span>
+                      <span className="fw-bold" style={{ fontSize: '18px', color: '#B00000' }}>{String(Number(selectedOrder.total_price).toLocaleString()).replace('.-', '')} บาท</span>
                     </div>
                   </div>
                 </div>
@@ -367,7 +424,7 @@ export default function OrdersManagementTap() {
                 <svg className="w-6 h-6" style={{ stroke: 'currentColor', fill: 'none', strokeWidth: '2.5', width: '28px', height: '28px' }} viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></svg>
               </div>
               <h4 className="fw-bold text-dark mb-2" style={{ fontSize: '18px' }}>ยืนยันการบันทึกข้อมูล?</h4>
-              <p className="text-muted mb-4" style={{ fontSize: '14px' }}>คุณต้องการบันทึกการเปลี่ยนสถานะเป็น <span className="fw-bold text-dark">"{modalStatus}"</span> ใช่หรือไม่?</p>
+              <p className="text-muted mb-4" style={{ fontSize: '14px' }}>คุณต้องการบันทึกการเปลี่ยนสถานะเป็น <span className="fw-bold text-dark">"{STATUS_MAP[modalStatus]?.label || modalStatus}"</span> ใช่หรือไม่?</p>
               <div className="d-flex gap-3 justify-content-center mt-2">
                 <button onClick={() => setShowConfirm(false)} className="btn btn-light fw-bold shadow-sm" style={{ fontSize: '14px', padding: '10px 24px', borderRadius: '8px' }}>ยกเลิก</button>
                 <button onClick={handleSaveChanges} className="btn text-white shadow-sm" style={{ backgroundColor: '#B00000', fontSize: '14px', fontWeight: 'bold', padding: '10px 24px', borderRadius: '8px' }} disabled={isSaving}>{isSaving ? 'กำลังบันทึก...' : 'ยืนยันบันทึก'}</button>

@@ -1,11 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { Bell } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
 
 export default function Navbar() {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   // เปลี่ยนค่าเริ่มต้นของการแจ้งเตือนเป็น Array ว่างไปก่อนครับ
   const [notifications, setNotifications] = useState([]);
+  const [username, setUsername] = useState('');
   const notifRef = useRef(null);
+
+  const navigate = useNavigate();
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -14,6 +19,11 @@ export default function Navbar() {
   };
 
   useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    const data = jwtDecode(token);
+
+    setUsername(data.username);
+
     const handleClickOutside = (event) => {
       if (notifRef.current && !notifRef.current.contains(event.target)) {
         setIsNotifOpen(false);
@@ -22,6 +32,10 @@ export default function Navbar() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const onLogout = () => {
+    navigate('/login')
+  }
 
   return (
     <nav className="navbar bg-color-primary shadow-sm" style={{ paddingBottom: '0.5rem', paddingTop: '0.5rem' }}>
@@ -95,9 +109,10 @@ export default function Navbar() {
           </div>
 
           <span className="text-white d-none d-sm-inline" style={{ fontSize: '14px', fontWeight: '600' }}>
-            Admin_01
+            {username}
           </span>
           <button 
+            onClick={onLogout}
             className="btn text-color-primary fw-semibold"
             style={{ backgroundColor: 'white', fontSize: '14px', padding: '0.5rem 1rem' }}
           >

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // ชี้ไปยัง URL ของ Backend (ถ้าไม่ได้ตั้งค่าไว้ จะใช้ /api เป็นค่าเริ่มต้น)
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const BASE_URL = 'http://localhost:3000' || '/api';
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -39,13 +39,22 @@ function storeLocalImage(file, dataUrl) {
 }
 
 async function request(path, options = {}) {
-  const { body, headers, ...restOptions } = options;
+  const { body, headers = {}, ...restOptions } = options;
+
+  // เพิ่มการดึง Token อัตโนมัติสำหรับ Route ที่ต้องการ Authorization
+  let token = null;
+  if (typeof window !== 'undefined') {
+    token = window.sessionStorage.getItem('token') || window.localStorage.getItem('token');
+  }
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
 
   try {
     const response = await apiClient.request({
       url: path,
       headers,
-      data: body,
+      data: body, // Axios ใช้ data ในการรับ Request Body
       ...restOptions,
     });
 
@@ -54,7 +63,8 @@ async function request(path, options = {}) {
     if (axios.isAxiosError(error)) {
       const status = error.response?.status ?? 'unknown';
       const statusText = error.response?.statusText ?? '';
-      const detail = error.response?.data?.message || error.message || 'Unknown error';
+      // Backend ใช้ .msg หรือ .message ในการส่งข้อความแจ้งเตือน
+      const detail = error.response?.data?.msg || error.response?.data?.message || error.message || 'Unknown error';
       throw new Error(`API request failed: ${status} ${statusText} - ${detail}`);
     }
 
@@ -63,7 +73,7 @@ async function request(path, options = {}) {
 }
 
 // ==========================================
-// ฟังก์ชันเรียก API ทั้งหมด (จะยิงไปหา Backend จริงๆ)
+// ฟังก์ชันเรียก API ทั้งหมด (ยิงไปหา Backend จริง)
 // ==========================================
 
 export async function getDashboardData(timeframe = 'today') {
@@ -71,44 +81,72 @@ export async function getDashboardData(timeframe = 'today') {
 }
 
 export async function getProducts() {
-  return request('/products');
+  return request('/product', { method: 'GET' });
 }
 
 export async function getOrders() {
-  return request('/orders');
+  const response = await request('/order', { method: 'GET' });
+  
+  // แกะเอาเฉพาะ Array ที่อยู่ใน key ชื่อ orders ส่งกลับไป (ถ้าไม่มี ให้ส่ง Array ว่าง)
+  return response && response.orders ? response.orders : [];
 }
 
-export async function updateOrderStatus(id, status) {
-  return request(`/orders/${encodeURIComponent(id)}/status`, {
-    method: 'PATCH',
+/**
+ * ปรับปรุงฟังก์ชันอัปเดตสถานะให้เข้ากับ Route ของ Backend
+ * 💡 สลับพารามิเตอร์ (status, id) ให้ตรงกับคำสั่งที่เรียกใช้ในหน้า OrdersManagementTap.jsx
+ */
+export async function updateOrderStatus(status, id) {
+  let path = '';
+  let method = 'PUT';
+  let body = undefined;
+
+  if (status === 'shipping') {
+    
+    path = `/order/${encodeURIComponent(id)}`;
+    body = {
+      shipperName: 'Thunder Express',
+      trackingNo: 'TH3323598022',
+      deliveryPersonName: 'สมชาย ใจดี',
+      deliveryPersonPhone: '0888888888',
+    };
+  } else if (status === 'delivered') {
+    
+    path = `/order/delivered/${encodeURIComponent(id)}`;
+  } else if (status === 'canceled' || status === 'refunded' || status === 'pending' || status === 'paid') {
+    
+    path = `/order/${status}/${encodeURIComponent(id)}`;
+  }
+
+  return request(path, {
+    method,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status }),
+    body: body,
   });
 }
 
 export async function createProduct(product) {
-  return request('/products', {
+  return request('/product', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(product),
+    body: product, // ส่ง Object ไปโดยตรง
   });
 }
 
 export async function updateProduct(id, product) {
-  return request(`/products/${encodeURIComponent(id)}`, {
+  return request(`/product/${encodeURIComponent(id)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(product),
+    body: product, // ส่ง Object ไปโดยตรง
   });
 }
 
 export async function deleteProduct(id) {
-  return request(`/products/${encodeURIComponent(id)}`, {
+  return request(`/product/${encodeURIComponent(id)}`, {
     method: 'DELETE',
   });
 }
 
-// สำหรับอัปโหลดรูปภาพ (ยังคงใช้ LocalStorage ชั่วคราวไปก่อนจนกว่า Backend จะมีระบบรับไฟล์)
+// สำหรับอัปโหลดรูปภาพ (บันทึกข้อมูลแบบ DataURL ลง LocalStorage ชั่วคราว)
 export async function uploadProductImage(file) {
   try {
     const dataUrl = await readFileAsDataUrl(file);

@@ -12,27 +12,19 @@ const secret_key = process.env.SECRET_KEY;
 
 // Get all orders ของ User
 router.get('/', async (req, res) => {
-  const token = req.headers.authorization.split(' ')[1];
-
-  if (!token) return res.status(400).json({ msg: 'เกิดข้อผิดพลาด กรุณาเข้าสู่ระบบใหม่อีกครั้ง' });
-
-  const data = jwt.verify(token, secret_key);
-  const user_id = data.user_id;
-
-  const query = `
+const query = `
     SELECT 
-      o.id AS order_id, o.total_price, o.status, o.created_at, o.paid_at, 
+      o.id AS order_id, o.user_id, o.total_price, o.status, o.created_at, o.paid_at, 
       o.shipping_address, o.customer_name, o.customer_phone, o.start_shipping_at,
       o.shipper_name, o.tracking_no, o.delivery_person_name, o.delivery_person_phone, o.delivered_at,
       oi.id AS item_id, oi.product_id, oi.quantity, oi.price_at_purchase, 
       oi.product_brand, oi.product_img, oi.product_model, oi.variation
     FROM orders o
     LEFT JOIN orderitems oi ON o.id = oi.order_id
-    WHERE o.user_id = ?
     ORDER BY o.id DESC
   `;
 
-  db.query(query, [user_id],
+  db.query(query,
     (err, result) => {
       if (err) return res.status(500).json({ msg: 'Server Error' });
       
@@ -50,6 +42,7 @@ router.get('/', async (req, res) => {
         if (!ordersMap[row.order_id]) {
           ordersMap[row.order_id] = {
             id: row.order_id,
+            user_id: row.user_id,
             total_price: row.total_price,
             status: row.status,
             created_at: row.created_at,
@@ -216,16 +209,8 @@ router.put('/:action/:id', (req, res) => {
   if (!action) return res.status(400).json({ msg: 'เกิดข้อบกพร่อง' });
   if (!order_id) return res.status(400).json({ msg: 'เกิดข้อบกพร่อง' });
 
-  let status;
-
-  if (action === 'cancel') {
-    status = 'canceled';
-  } else {
-    status = 'refunded';
-  }
-
   db.query('UPDATE orders SET status = ? WHERE id = ?',
-    [status, order_id],
+    [action, order_id],
     (err, result) => {
       if (err) return res.status(500).json({ msg: 'Server Error' });
       res.status(200).json({ msg: 'อัพเดตสถานะสินค้าสําเร็จ!' });

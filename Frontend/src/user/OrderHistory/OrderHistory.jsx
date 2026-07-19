@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './OrderHistory.css';
+import { jwtDecode } from 'jwt-decode';
 
 // ข้อมูลจำลองประวัติออเดอร์
 const mockOrders = [
@@ -79,12 +80,13 @@ function OrderTracking() {
     if (!token) return alert('คุณไม่มี Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
 
     try {
-      const res = await axios.get('http://localhost:3000/order', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
-      setOrders(res.data.orders);
+      const token = sessionStorage.getItem('token');
+      if (!token) return alert('คุณไม่มี Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
+
+      const data = jwtDecode(token);
+
+      const res = await axios.get('http://localhost:3000/order')
+      setOrders((res.data.orders).filter((order) => order.user_id === data.user_id));
     } catch (error) {
       console.error('Error getting orders:', error);
     }
