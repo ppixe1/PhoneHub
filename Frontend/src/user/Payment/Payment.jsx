@@ -41,12 +41,31 @@ export default function Payment() {
       return;
     }
 
-    // try {
-    //   axios.post('http://localhost:3000/')
-    // }
-    // catch (error) {
+    const orderData = {
+      totalPrice: totalAmount,
+      shippingAddress: address,
+      customerName: address.fullName,
+      customerPhone: address.phone,
+      items: selectedCartItems
+    };
 
-    // }
+    console.log(orderData);
+
+    axios.post('http://localhost:3000/order', orderData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${sessionStorage.getItem('token')}`
+      }
+    })
+    .then(res => {
+      alert('สั่งซื้อสินค้าเรียบร้อยแล้ว');
+      navigate('/order-history');
+      window.scrollTo(0, 0);
+    })
+    .catch(error => {
+      // console.error('Error creating order:', error.response.data.err);
+      alert('เกิดข้อผิดพลาดในการสั่งซื้อ');
+    });
   };
 
   const inputStyle = {
