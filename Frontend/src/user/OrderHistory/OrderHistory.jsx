@@ -224,10 +224,10 @@ function OrderTracking() {
                   {order.status === 'delivered' ? (
                     <div>
                       {/* <button className='btn btn-outline-secondary me-2' type='button'>ซื้ออีกครั้ง</button> */}
-                      <button className='btn btn-outline-secondary' type='button' onClick={() => updateStatus('refund', order.id)}>ขอคืนเงิน</button>
+                      <button className='btn btn-outline-secondary' type='button' onClick={() => updateStatus('refunded', order.id)}>ขอคืนเงิน</button>
                     </div>
                   ) : order.status === 'shipping' ? (
-                    <button className='btn btn-outline-secondary' type='button' onClick={() => updateStatus('cancel', order.id)}>ยกเลิก</button>
+                    <button className='btn btn-outline-secondary' type='button' onClick={() => updateStatus('canceled', order.id)}>ยกเลิก</button>
                   ) : order.status === 'canceled' ? (
                     // <button className='btn btn-outline-secondary' type='button'>ซื้ออีกครั้ง</button>
                     ''

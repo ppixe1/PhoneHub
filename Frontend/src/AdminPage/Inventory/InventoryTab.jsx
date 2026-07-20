@@ -1,5 +1,5 @@
 ﻿import React, { useState, useRef, useEffect } from "react";
-import { Trash2, Plus, Search, Eye, AlertCircle, Image as ImageIcon, Tag, Cpu, Palette, Sparkles, X, ChevronDown, ListFilter, CheckCircle2 } from "lucide-react";
+import { Trash2, Plus, Search, Eye, AlertCircle, Image as ImageIcon, Tag, Cpu, Palette, X, ChevronDown, ListFilter, CheckCircle2 } from "lucide-react";
 import { getProducts, createProduct, updateProduct, deleteProduct } from '../services/api';
 
 export default function InventoryTab() {
@@ -9,20 +9,21 @@ export default function InventoryTab() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("ทั้งหมด");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
   
   const [formData, setFormData] = useState({
-    id: "", name: "", brand: "Apple", ram: "8", rom: "256", price: "", promoPrice: "", privilege: "",
-    screenSize: "", screenType: "", refreshRate: "", cpu: "", rearCam: "", frontCam: "", battery: "",
-    charging: "", os: "", connectivity: "", colors: [{ name: "", stock: "" }], features: [""], image: ""
+    id: "", name: "", brand: "Apple", ram: "", promoPrice: "", privilege: "",
+    screenSize: "", screenType: "", refreshRate: "", cpu: "", backCam: "", frontCam: "", battery: "",
+    charging: "", os: "", connectivity: "", 
+    variations: [{ storage: "256GB", color: "", stock: "0", price: "" }], // ปรับโครงสร้างให้รับข้อมูลครบ 4 ค่า
+    image: ""
   });
   
   const [editingId, setEditingId] = useState(null);
   const fileInputRef = useRef(null);
 
-  // 2. เพิ่ม useEffect เพื่อดึงข้อมูลจาก Backend ทันทีที่เปิดหน้านี้
   useEffect(() => {
     fetchInventory();
   }, []);
@@ -31,11 +32,61 @@ export default function InventoryTab() {
     setIsLoading(true);
     try {
       const data = await getProducts();
-      // จัดการกับข้อมูลที่ได้มา (เผื่อ Backend ส่งมาแล้วมีโครงสร้างแปลกไป)
-      const formattedData = data.map(item => ({
-        ...item,
-        totalStock: item.colors?.reduce((sum, c) => sum + (Number(c.stock) || 0), 0) || item.stock || 0
-      }));
+      
+      const formattedData = data.map(item => {
+        const parseJSON = (val, fallback) => {
+          if (!val) return fallback;
+          if (typeof val === 'string') {
+            try { return JSON.parse(val); } catch (e) { return fallback; }
+          }
+          return val;
+        };
+
+        const dbVariations = parseJSON(item.variation, []);
+        const images = parseJSON(item.img, []);
+        const specs = parseJSON(item.specifications, {});
+
+        // จัดการดึงข้อมูล Variation จาก Database ให้ตรงกับ Form UI
+        const mappedVariations = dbVariations.length > 0 
+          ? dbVariations.map(v => ({
+              storage: v.storage || "",
+              color: v.color || "",
+              stock: String(v.stock || "0"),
+              price: String(v.price || "")
+            })) 
+          : [{ storage: "256GB", color: "", stock: "0", price: "" }];
+
+        const totalStock = mappedVariations.reduce((sum, v) => sum + Number(v.stock), 0);
+        const defaultPrice = mappedVariations[0]?.price || "0";
+        const baseCapacity = mappedVariations[0]?.storage || "-";
+
+        return {
+          id: item.id,
+          name: item.model,
+          brand: item.brand,
+          ram: specs.ram || "", 
+          capacity: baseCapacity,
+          price: defaultPrice,
+          promoPrice: specs.promoPrice || "",
+          privilege: specs.highlights || "",
+          screenSize: specs.screenSize || "",
+          screenType: specs.screenType || "",
+          refreshRate: specs.refreshRate || "",
+          cpu: specs.chipset || "",
+          backCam: specs.backCamera || "",
+          frontCam: specs.frontCamera || "",
+          battery: specs.batteryLife || "",
+          charging: specs.fastCharge || "",
+          os: specs.os || "",
+          connectivity: specs.connections || "",
+          variations: mappedVariations, // ใช้ข้อมูล mappedVariations
+          image: (Array.isArray(images) ? images[0] : images) || "https://via.placeholder.com/150",
+          totalStock,
+          views: item.views || 0,
+          sold: item.sold || 0,
+        };
+      });
+      
       setProducts(formattedData);
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -46,9 +97,9 @@ export default function InventoryTab() {
   };
 
   const statusOptions = [
-    { value: 'ทั้งหมด', label: 'สถานะทั้งหมด', icon: <ListFilter size={16} color="#6C757D" /> },
-    { value: 'ขายอยู่', label: 'ขายอยู่ (มีสต็อก)', icon: <CheckCircle2 size={16} color="#2E7D32" /> },
-    { value: 'สินค้าหมด', label: 'สินค้าหมด (สต็อก 0)', icon: <AlertCircle size={16} color="#DC2626" /> }
+    { value: 'all', label: 'ทั้งหมด', icon: <ListFilter size={16} color="#6C757D" /> },
+    { value: 'in-stock', label: 'ขายอยู่', icon: <CheckCircle2 size={16} color="#2E7D32" /> },
+    { value: 'out-of-stock', label: 'สินค้าหมด', icon: <AlertCircle size={16} color="#DC2626" /> }
   ];
 
   const filteredProducts = products.filter((p) => {
@@ -56,18 +107,20 @@ export default function InventoryTab() {
     const isOutOfStock = p.totalStock <= 0;
     
     const matchesStatus = 
-      statusFilter === "ทั้งหมด" || 
-      (statusFilter === "ขายอยู่" && !isOutOfStock) ||
-      (statusFilter === "สินค้าหมด" && isOutOfStock);
+      statusFilter === "all" || 
+      (statusFilter === "in-stock" && !isOutOfStock) ||
+      (statusFilter === "out-of-stock" && isOutOfStock);
       
     return matchesSearch && matchesStatus;
   });
 
   const handleAddProduct = () => {
     setFormData({
-      id: "", name: "", brand: "Apple", ram: "8", rom: "256", price: "", promoPrice: "", privilege: "",
-      screenSize: "", screenType: "", refreshRate: "", cpu: "", rearCam: "", frontCam: "", battery: "",
-      charging: "", os: "", connectivity: "", colors: [{ name: "", stock: "0" }], features: [""], image: ""
+      id: "", name: "", brand: "Apple", ram: "", promoPrice: "", privilege: "",
+      screenSize: "", screenType: "", refreshRate: "", cpu: "", backCam: "", frontCam: "", battery: "",
+      charging: "", os: "", connectivity: "", 
+      variations: [{ storage: "256GB", color: "", stock: "0", price: "" }], 
+      image: ""
     });
     setEditingId(null);
     setShowModal(true);
@@ -76,20 +129,17 @@ export default function InventoryTab() {
   const handleEditProduct = (product) => {
     setFormData({
       ...product,
-      rom: product.capacity ? product.capacity.replace('GB', '') : "256",
-      colors: product.colors && product.colors.length > 0 ? product.colors : [{ name: "", stock: "0" }],
-      features: product.features && product.features.length > 0 ? product.features : [""],
+      variations: product.variations && product.variations.length > 0 ? product.variations : [{ storage: "256GB", color: "", stock: "0", price: "" }],
     });
     setEditingId(product.id);
     setShowModal(true);
   };
 
-  // 3. อัปเดตฟังก์ชันลบ ให้เรียกไปที่ Backend ก่อน
   const handleDeleteProduct = async (id) => {
     if(window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบสินค้านี้?")) {
       try {
-        await deleteProduct(id); // เรียก API ลบข้อมูล
-        setProducts(products.filter((p) => p.id !== id)); // ลบออกจากหน้าจอถ้า Backend ลบสำเร็จ
+        await deleteProduct(id);
+        setProducts(products.filter((p) => p.id !== id));
       } catch (error) {
         console.error("Error deleting product:", error);
         alert("เกิดข้อผิดพลาดในการลบสินค้า");
@@ -97,57 +147,64 @@ export default function InventoryTab() {
     }
   };
 
-  const handleAddColor = () => setFormData({ ...formData, colors: [...formData.colors, { name: "", stock: "0" }] });
-  const handleRemoveColor = (index) => {
-    const newColors = [...formData.colors];
-    newColors.splice(index, 1);
-    setFormData({ ...formData, colors: newColors });
-  };
-  const handleColorChange = (index, field, value) => {
-    const newColors = [...formData.colors];
-    newColors[index][field] = value;
-    setFormData({ ...formData, colors: newColors });
+  const handleAddVariation = () => {
+    setFormData({ 
+      ...formData, 
+      variations: [...formData.variations, { storage: "256GB", color: "", stock: "0", price: "" }] 
+    });
   };
 
-  const handleAddFeature = () => setFormData({ ...formData, features: [...formData.features, ""] });
-  const handleRemoveFeature = (index) => {
-    const newFeatures = [...formData.features];
-    newFeatures.splice(index, 1);
-    setFormData({ ...formData, features: newFeatures });
-  };
-  const handleFeatureChange = (index, value) => {
-    const newFeatures = [...formData.features];
-    newFeatures[index] = value;
-    setFormData({ ...formData, features: newFeatures });
+  const handleRemoveVariation = (index) => {
+    const newVariations = [...formData.variations];
+    newVariations.splice(index, 1);
+    setFormData({ ...formData, variations: newVariations });
   };
 
-  // 4. อัปเดตฟังก์ชันบันทึกข้อมูล ให้ส่งไปที่ Backend (POST / PUT)
+  const handleVariationChange = (index, field, value) => {
+    const newVariations = [...formData.variations];
+    newVariations[index][field] = value;
+    setFormData({ ...formData, variations: newVariations });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    const totalStock = formData.colors.reduce((sum, c) => sum + (parseInt(c.stock) || 0), 0);
-    
     const payload = {
-      ...formData,
-      capacity: `${formData.rom}GB`,
-      totalStock: totalStock,
-      // กรณีใช้ Base64 จะส่งไปเก็บดื้อๆ เลย ถ้า Backend รองรับ หรือควรเป็นไฟล์อัปโหลด
-      image: formData.image || "https://via.placeholder.com/150" 
+      brand: formData.brand,
+      model: formData.name, 
+      variation: formData.variations.map(v => ({
+        storage: v.storage, // บันทึกความจุแยกตามรายการ
+        color: v.color,
+        stock: String(v.stock || "0"),
+        price: String(v.price || "0")
+      })),
+      img: [formData.image || "https://img.magnific.com/premium-vector/nothing-rubber-stamp-seal-vector_140916-33167.jpg?semt=ais_hybrid&w=740&q=80"],
+      specifications: {
+        screenSize: formData.screenSize,
+        screenType: formData.screenType,
+        refreshRate: formData.refreshRate,
+        chipset: formData.cpu,
+        backCamera: formData.backCam,
+        frontCamera: formData.frontCam,
+        batteryLife: formData.battery,
+        fastCharge: formData.charging,
+        os: formData.os,
+        connections: formData.connectivity,
+        highlights: formData.privilege,
+        // ram: formData.ram,
+        // promoPrice: formData.promoPrice
+      }
     };
 
     try {
       if (editingId) {
-        // แก้ไขข้อมูล (PUT)
-        const updatedItem = await updateProduct(editingId, payload);
-        // ถ้า API ไม่ได้คืนค่าตัวอัปเดตกลับมา ให้เราอัปเดต state เอง
-        const finalItem = updatedItem || { ...payload, id: editingId }; 
-        setProducts(products.map((p) => (p.id === editingId ? finalItem : p)));
+        await updateProduct(editingId, payload);
       } else {
-        // เพิ่มข้อมูลใหม่ (POST)
-        const newItem = await createProduct(payload);
-        setProducts([...products, newItem || { ...payload, id: `NEW-${Date.now()}` }]);
+        await createProduct(payload);
       }
+      
+      await fetchInventory();
       setShowModal(false);
     } catch (error) {
       console.error("Error saving product:", error);
@@ -171,22 +228,19 @@ export default function InventoryTab() {
   return (
     <div className="animate-fade-in" style={{ paddingBottom: '2rem' }}>
       
-      {/* 1. ส่วนหัวกล่องแดงหลัก */}
       <div className="rounded-4 overflow-hidden shadow-sm border mb-4" style={{ borderColor: '#e9ecef' }}>
         <div className="text-white p-4" style={{ backgroundColor: '#B00000' }}>
           <h2 className="fw-bold mb-2" style={{ fontSize: '24px', borderLeft: '12px solid #FFD129', paddingLeft: '12px' }}>
             จัดการคลังสินค้า (Inventory)
           </h2>
-          <p className="m-0 text-white-50" style={{ paddingLeft: '24px' }}>จัดการสินค้าและสต็อก</p>
+          <p className="m-0 text-white-50" style={{ paddingLeft: '24px' }}>จัดการสินค้าและสต็อก เชื่อมต่อ Database สมบูรณ์</p>
         </div>
       </div>
 
       <div className="px-1">
-        {/* 2. แถบส่วนหัวตาราง */}
         <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
           <div className="d-flex flex-column flex-sm-row gap-2 w-100" style={{ maxWidth: '560px' }}>
             
-            {/* Custom Dropdown สถานะ */}
             <div className="position-relative" style={{ minWidth: '180px' }}>
               <div 
                 className="d-flex align-items-center justify-content-between bg-white border shadow-sm user-select-none"
@@ -226,7 +280,6 @@ export default function InventoryTab() {
               )}
             </div>
 
-            {/* ช่องค้นหา */}
             <div className="input-group shadow-sm" style={{ borderRadius: '12px', overflow: 'hidden', flex: 1 }}>
               <span className="input-group-text bg-white border-end-0" style={{ paddingLeft: '16px' }}>
                 <Search size={18} style={{ color: "#999" }} />
@@ -251,19 +304,18 @@ export default function InventoryTab() {
           </button>
         </div>
 
-        {/* 3. ตารางสินค้า */}
         <div className="bg-white rounded-4 shadow-sm border overflow-hidden">
           <div className="table-responsive">
-            <table className="table table-hover align-middle m-0" style={{ minWidth: '1000px' }}>
+            <table className="table table-hover align-middle m-0" style={{ minWidth: '1050px' }}>
               <thead>
                 <tr style={{ backgroundColor: '#B00000', color: 'white', fontSize: '14px' }}>
                   <th className="py-3 px-4" style={{ width: '8%' }}>รหัส</th>
                   <th className="py-3" style={{ width: '10%' }}>รูปภาพ</th>
-                  <th className="py-3" style={{ width: '22%' }}>ชื่อสินค้า</th>
-                  <th className="py-3 text-center" style={{ width: '12%' }}>ราคา (บาท)</th>
+                  <th className="py-3" style={{ width: '20%' }}>ชื่อสินค้า</th>
+                  <th className="py-3 text-center" style={{ width: '12%' }}>ราคาเริ่มต้น (บาท)</th>
                   <th className="py-3 text-center" style={{ width: '10%' }}>ยอดเข้าดู</th>
                   <th className="py-3 text-center" style={{ width: '10%' }}>ขายแล้ว</th>
-                  <th className="py-3" style={{ width: '15%' }}>สต็อกแยกตามสี</th>
+                  <th className="py-3" style={{ width: '16%' }}>สต็อก (ความจุ/สี)</th>
                   <th className="py-3 text-center" style={{ width: '10%' }}>สถานะ</th>
                   <th className="py-3 text-center" style={{ width: '10%' }}>จัดการ</th>
                 </tr>
@@ -287,25 +339,27 @@ export default function InventoryTab() {
                         </td>
                         <td>
                           <div className={`fw-bold mb-1 ${isOutOfStock ? 'text-muted' : 'text-dark'}`} style={{ fontSize: '15px' }}>{product.name}</div>
-                          <div className="text-muted" style={{ fontSize: '12px' }}>ความจุ: {product.capacity || '-'} | แบรนด์: {product.brand || '-'}</div>
+                          <div className="text-muted" style={{ fontSize: '12px' }}>แบรนด์: {product.brand || '-'}</div>
                         </td>
-                        <td className="text-center fw-bold" style={{ color: isOutOfStock ? '#6c757d' : '#B00000', fontSize: '15px' }}>{product.price}</td>
+                        <td className="text-center fw-bold" style={{ color: isOutOfStock ? '#6c757d' : '#B00000', fontSize: '15px' }}>
+                          {product.price ? Number(product.price).toLocaleString() : '0'}
+                        </td>
                         <td className="text-center text-muted" style={{ fontSize: '14px' }}><Eye size={14} className="me-1 d-inline" /> {product.views || 0}</td>
                         <td className="text-center fw-bold text-dark" style={{ fontSize: '14px' }}>{product.sold || 0} <span className="text-muted fw-normal" style={{ fontSize: '13px' }}>ชิ้น</span></td>
                         
                         <td className="py-3">
-                          <div className="d-flex flex-column mx-auto" style={{ minWidth: '150px', maxWidth: '180px' }}>
+                          <div className="d-flex flex-column mx-auto" style={{ minWidth: '180px', maxWidth: '220px' }}>
                             <div className={`fw-bold mb-2 text-center ${isOutOfStock ? 'text-danger' : 'text-dark'}`} style={{ fontSize: '13px' }}>
                               รวม: {product.totalStock} เครื่อง
                             </div>
                             <div 
-                              style={{ maxHeight: '52px', overflowY: product.colors?.length > 2 ? 'auto' : 'visible', overflowX: 'hidden' }}
+                              style={{ maxHeight: '60px', overflowY: product.variations?.length > 2 ? 'auto' : 'visible', overflowX: 'hidden' }}
                               className="custom-scrollbar"
                             >
-                              {product.colors?.map((c, idx) => (
-                                <div key={idx} className="d-flex justify-content-between align-items-center mb-1" style={{ fontSize: '13px' }}>
-                                  <span className="text-muted text-truncate me-2" style={{ maxWidth: '110px' }}>- {c.name || 'ไม่ระบุสี'}</span>
-                                  <span className={`fw-bold flex-shrink-0 ${c.stock > 0 ? 'text-success' : 'text-danger'}`}>{c.stock}</span>
+                              {product.variations?.map((v, idx) => (
+                                <div key={idx} className="d-flex justify-content-between align-items-center mb-1" style={{ fontSize: '12px' }}>
+                                  <span className="text-muted text-truncate me-2" style={{ maxWidth: '140px' }}>- {v.storage} {v.color || 'ไม่ระบุสี'}</span>
+                                  <span className={`fw-bold flex-shrink-0 ${v.stock > 0 ? 'text-success' : 'text-danger'}`}>{v.stock}</span>
                                 </div>
                               ))}
                             </div>
@@ -342,7 +396,6 @@ export default function InventoryTab() {
           </div>
         </div>
 
-        {/* 4. Modal เพิ่ม/แก้ไขสินค้า */}
         {showModal && (
           <div
             className="position-fixed"
@@ -351,7 +404,7 @@ export default function InventoryTab() {
           >
             <div
               className="bg-light rounded-4 shadow-lg d-flex flex-column overflow-hidden"
-              style={{ width: "95%", maxWidth: "720px", maxHeight: "90vh" }}
+              style={{ width: "95%", maxWidth: "800px", maxHeight: "90vh" }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-4 d-flex justify-content-between align-items-center" style={{ backgroundColor: '#B00000', color: 'white' }}>
@@ -363,7 +416,6 @@ export default function InventoryTab() {
 
               <form onSubmit={handleSubmit} className="overflow-auto p-4" style={{ flex: 1, backgroundColor: '#F3F4F6' }}>
                 
-                {/* Section รูปภาพ */}
                 <div className="bg-white p-4 rounded-4 border mb-4 shadow-sm">
                   <div className="d-flex justify-content-between align-items-center mb-3">
                     <span className="fw-bold d-flex align-items-center gap-2 text-dark" style={{ fontSize: '15px' }}>
@@ -383,7 +435,7 @@ export default function InventoryTab() {
                     {formData.image && (
                       <div className="position-relative" style={{ width: '100px', height: '100px' }}>
                         <img src={formData.image} alt="preview" className="rounded-4 border" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        <button type="button" className="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle p-1" style={{ width: '24px', height: '24px' }} onClick={() => setFormData({...formData, image: ''})}>
+                        <button type="button" className="d-flex align-items-center justify-content-center btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle p-1" style={{ width: '24px', height: '24px' }} onClick={() => setFormData({...formData, image: ''})}>
                           <X size={14} />
                         </button>
                       </div>
@@ -391,14 +443,13 @@ export default function InventoryTab() {
                   </div>
                 </div>
 
-                {/* Section 1: ข้อมูลพื้นฐาน */}
                 <div className="bg-white p-4 rounded-4 border mb-4 shadow-sm">
                   <h5 className="fw-bold mb-4 d-flex align-items-center gap-2 text-dark" style={{ fontSize: '16px' }}>
                     <Tag size={18} color="#B00000" /> 1. ข้อมูลพื้นฐาน
                   </h5>
                   <div className="row g-3">
                     <div className="col-12">
-                      <label className="form-label fw-bold text-dark" style={{ fontSize: '13px' }}>ชื่อรุ่นและยี่ห้อ <span className="text-danger">*</span></label>
+                      <label className="form-label fw-bold text-dark" style={{ fontSize: '13px' }}>ชื่อรุ่น <span className="text-danger">*</span></label>
                       <input type="text" className="form-control shadow-sm" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required style={{ borderRadius: '12px' }} />
                     </div>
                     <div className="col-md-4">
@@ -406,59 +457,74 @@ export default function InventoryTab() {
                       <select className="form-select shadow-sm" value={formData.brand} onChange={(e) => setFormData({ ...formData, brand: e.target.value })} style={{ borderRadius: '12px', cursor: 'pointer' }}>
                         <option value="Apple">Apple</option>
                         <option value="Samsung">Samsung</option>
+                        <option value="Vivo">Vivo</option>
                         <option value="Oppo">Oppo</option>
                         <option value="Xiaomi">Xiaomi</option>
-                        <option value="อื่นๆ">อื่นๆ</option>
                       </select>
                     </div>
                     <div className="col-md-4">
-                      <label className="form-label fw-bold text-dark" style={{ fontSize: '13px' }}>RAM (GB)</label>
-                      <input type="number" className="form-control shadow-sm" value={formData.ram} onChange={(e) => setFormData({ ...formData, ram: e.target.value })} style={{ borderRadius: '12px' }} />
+                      <label className="form-label fw-bold text-dark" style={{ fontSize: '13px' }}>RAM</label>
+                      <input type="text" placeholder="เช่น 8GB" className="form-control shadow-sm" value={formData.ram} onChange={(e) => setFormData({ ...formData, ram: e.target.value })} style={{ borderRadius: '12px' }} />
                     </div>
                     <div className="col-md-4">
-                      <label className="form-label fw-bold text-dark" style={{ fontSize: '13px' }}>ROM (GB)</label>
-                      <select className="form-select shadow-sm" value={formData.rom} onChange={(e) => setFormData({ ...formData, rom: e.target.value })} style={{ borderRadius: '12px', cursor: 'pointer' }}>
-                        <option value="128">128</option><option value="256">256</option><option value="512">512</option><option value="1024">1TB</option>
-                      </select>
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label fw-bold text-dark" style={{ fontSize: '13px' }}>ราคาเต็ม (บาท) <span className="text-danger">*</span></label>
-                      <input type="number" className="form-control shadow-sm" value={formData.price} onChange={(e) => setFormData({ ...formData, price: e.target.value })} required style={{ borderRadius: '12px' }} />
-                    </div>
-                    <div className="col-md-6">
                       <label className="form-label fw-bold text-dark" style={{ fontSize: '13px' }}>ราคาโปรโมชั่น (ถ้ามี)</label>
                       <input type="number" className="form-control shadow-sm" value={formData.promoPrice} onChange={(e) => setFormData({ ...formData, promoPrice: e.target.value })} style={{ borderRadius: '12px' }} />
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label fw-bold text-dark" style={{ fontSize: '13px' }}>จุดเด่น (Highlights)</label>
+                      <textarea className="form-control shadow-sm" rows="2" value={formData.privilege} onChange={(e) => setFormData({ ...formData, privilege: e.target.value })} style={{ borderRadius: '12px' }}></textarea>
                     </div>
                   </div>
                 </div>
 
-                {/* Section 2: สเปกทางเทคนิค (ย่อส่วนนิดหน่อยเพื่อความกระชับ) */}
                 <div className="bg-white p-4 rounded-4 border mb-4 shadow-sm">
                   <h5 className="fw-bold mb-4 d-flex align-items-center gap-2 text-dark" style={{ fontSize: '16px' }}>
                     <Cpu size={18} color="#B00000" /> 2. สเปกทางเทคนิค
                   </h5>
                   <div className="row g-3">
-                    <div className="col-12"><label className="form-label fw-bold text-dark" style={{ fontSize: '13px' }}>ชิปเซ็ต/หน่วยประมวลผล (CPU)</label><input type="text" className="form-control shadow-sm" value={formData.cpu} onChange={(e) => setFormData({ ...formData, cpu: e.target.value })} style={{ borderRadius: '12px' }} /></div>
-                    <div className="col-md-6"><label className="form-label fw-bold text-dark" style={{ fontSize: '13px' }}>กล้องหลัง</label><input type="text" className="form-control shadow-sm" value={formData.rearCam} onChange={(e) => setFormData({ ...formData, rearCam: e.target.value })} style={{ borderRadius: '12px' }} /></div>
+                    <div className="col-12"><label className="form-label fw-bold text-dark" style={{ fontSize: '13px' }}>ชิปเซ็ต/หน่วยประมวลผล (Chipset)</label><input type="text" className="form-control shadow-sm" value={formData.cpu} onChange={(e) => setFormData({ ...formData, cpu: e.target.value })} style={{ borderRadius: '12px' }} /></div>
+                    
+                    <div className="col-md-4"><label className="form-label fw-bold text-dark" style={{ fontSize: '13px' }}>ขนาดหน้าจอ</label><input type="text" className="form-control shadow-sm" value={formData.screenSize} onChange={(e) => setFormData({ ...formData, screenSize: e.target.value })} style={{ borderRadius: '12px' }} /></div>
+                    <div className="col-md-4"><label className="form-label fw-bold text-dark" style={{ fontSize: '13px' }}>ชนิดหน้าจอ</label><input type="text" className="form-control shadow-sm" value={formData.screenType} onChange={(e) => setFormData({ ...formData, screenType: e.target.value })} style={{ borderRadius: '12px' }} /></div>
+                    <div className="col-md-4"><label className="form-label fw-bold text-dark" style={{ fontSize: '13px' }}>Refresh Rate</label><input type="text" className="form-control shadow-sm" value={formData.refreshRate} onChange={(e) => setFormData({ ...formData, refreshRate: e.target.value })} style={{ borderRadius: '12px' }} /></div>
+
+                    <div className="col-md-6"><label className="form-label fw-bold text-dark" style={{ fontSize: '13px' }}>กล้องหลัง</label><input type="text" className="form-control shadow-sm" value={formData.backCam} onChange={(e) => setFormData({ ...formData, backCam: e.target.value })} style={{ borderRadius: '12px' }} /></div>
                     <div className="col-md-6"><label className="form-label fw-bold text-dark" style={{ fontSize: '13px' }}>กล้องหน้า</label><input type="text" className="form-control shadow-sm" value={formData.frontCam} onChange={(e) => setFormData({ ...formData, frontCam: e.target.value })} style={{ borderRadius: '12px' }} /></div>
-                    <div className="col-md-6"><label className="form-label fw-bold text-dark" style={{ fontSize: '13px' }}>ความจุแบตเตอรี่ (mAh)</label><input type="text" className="form-control shadow-sm" value={formData.battery} onChange={(e) => setFormData({ ...formData, battery: e.target.value })} style={{ borderRadius: '12px' }} /></div>
+                    
+                    <div className="col-md-6"><label className="form-label fw-bold text-dark" style={{ fontSize: '13px' }}>การใช้งานแบตเตอรี่</label><input type="text" className="form-control shadow-sm" value={formData.battery} onChange={(e) => setFormData({ ...formData, battery: e.target.value })} style={{ borderRadius: '12px' }} /></div>
+                    <div className="col-md-6"><label className="form-label fw-bold text-dark" style={{ fontSize: '13px' }}>ระบบชาร์จไว</label><input type="text" className="form-control shadow-sm" value={formData.charging} onChange={(e) => setFormData({ ...formData, charging: e.target.value })} style={{ borderRadius: '12px' }} /></div>
+                    
                     <div className="col-md-6"><label className="form-label fw-bold text-dark" style={{ fontSize: '13px' }}>ระบบปฏิบัติการ (OS)</label><input type="text" className="form-control shadow-sm" value={formData.os} onChange={(e) => setFormData({ ...formData, os: e.target.value })} style={{ borderRadius: '12px' }} /></div>
+                    <div className="col-md-6"><label className="form-label fw-bold text-dark" style={{ fontSize: '13px' }}>การเชื่อมต่อไร้สาย</label><input type="text" className="form-control shadow-sm" value={formData.connectivity} onChange={(e) => setFormData({ ...formData, connectivity: e.target.value })} style={{ borderRadius: '12px' }} /></div>
                   </div>
                 </div>
 
-                {/* Section 3: สีและสต็อก */}
                 <div className="bg-white p-4 rounded-4 border mb-4 shadow-sm">
                   <div className="d-flex justify-content-between align-items-center mb-3">
-                    <h5 className="fw-bold m-0 d-flex align-items-center gap-2 text-dark" style={{ fontSize: '16px' }}><Palette size={18} color="#B00000" /> สีและสต็อก <span className="text-danger">*</span></h5>
-                    <button type="button" className="btn btn-sm d-flex align-items-center gap-1 shadow-sm" style={{ backgroundColor: '#FFD129', fontWeight: 'bold', fontSize: '13px', borderRadius: '8px' }} onClick={handleAddColor}><Plus size={16} /> เพิ่มสี</button>
+                    <h5 className="fw-bold m-0 d-flex align-items-center gap-2 text-dark" style={{ fontSize: '16px' }}><Palette size={18} color="#B00000" /> 3. รุ่นย่อย (ความจุ, สี, ราคา, สต็อก) <span className="text-danger">*</span></h5>
+                    <button type="button" className="btn btn-sm d-flex align-items-center gap-1 shadow-sm" style={{ backgroundColor: '#FFD129', fontWeight: 'bold', fontSize: '13px', borderRadius: '8px' }} onClick={handleAddVariation}><Plus size={16} /> เพิ่มรุ่นย่อย</button>
                   </div>
-                  <div className={`d-flex flex-column gap-2 ${formData.colors.length > 2 ? 'pe-2' : ''}`}>
-                    {formData.colors.map((color, index) => (
-                      <div key={index} className="row g-2 align-items-center m-0 w-100">
-                        <div className="col-7 col-md-8 px-1"><input type="text" className="form-control shadow-sm" placeholder="ชื่อสี" value={color.name} onChange={(e) => handleColorChange(index, "name", e.target.value)} required style={{ borderRadius: '12px' }} /></div>
-                        <div className="col-4 col-md-3 px-1"><input type="number" className="form-control shadow-sm" placeholder="สต็อก" value={color.stock} onChange={(e) => handleColorChange(index, "stock", e.target.value)} required style={{ borderRadius: '12px' }} /></div>
-                        <div className="col-1 text-center px-1 d-flex justify-content-center">
-                          {formData.colors.length > 1 && <button type="button" className="btn btn-link text-danger p-0 m-0" onClick={() => handleRemoveColor(index)}><Trash2 size={18} /></button>}
+                  <div className={`d-flex flex-column gap-2 ${formData.variations.length > 2 ? 'pe-2' : ''}`}>
+                    {formData.variations.map((v, index) => (
+                      <div key={index} className="row g-2 align-items-center m-0 w-100 mb-2">
+                        <div className="col-6 col-md-3 px-1">
+                          <input type="text" className="form-control shadow-sm" placeholder="ความจุ (เช่น 256GB)" value={v.storage} onChange={(e) => handleVariationChange(index, "storage", e.target.value)} required style={{ borderRadius: '12px', fontSize: '13px' }} />
+                        </div>
+                        <div className="col-6 col-md-3 px-1">
+                          <input type="text" className="form-control shadow-sm" placeholder="สี (เช่น Cosmic Orange)" value={v.color} onChange={(e) => handleVariationChange(index, "color", e.target.value)} required style={{ borderRadius: '12px', fontSize: '13px' }} />
+                        </div>
+                        <div className="col-5 col-md-3 px-1">
+                          <input type="number" className="form-control shadow-sm" placeholder="ราคา (บาท)" value={v.price} onChange={(e) => handleVariationChange(index, "price", e.target.value)} required style={{ borderRadius: '12px', fontSize: '13px' }} />
+                        </div>
+                        <div className="col-5 col-md-2 px-1">
+                          <input type="number" className="form-control shadow-sm" placeholder="สต็อก" value={v.stock} onChange={(e) => handleVariationChange(index, "stock", e.target.value)} required style={{ borderRadius: '12px', fontSize: '13px' }} />
+                        </div>
+                        <div className="col-2 col-md-1 text-center px-1 d-flex justify-content-center">
+                          {formData.variations.length > 1 && (
+                            <button type="button" className="btn btn-link text-danger p-0 m-0" onClick={() => handleRemoveVariation(index)}>
+                              <Trash2 size={18} />
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}

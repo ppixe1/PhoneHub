@@ -108,7 +108,7 @@ export default function Navbar() {
             )}
           </div>
 
-          <span className="text-white d-none d-sm-inline" style={{ fontSize: '14px', fontWeight: '600' }}>
+          <span className="text-white d-none d-sm-inline" style={{ fontSize: '16px', fontWeight: 'normal' }}>
             {username}
           </span>
           <button 
