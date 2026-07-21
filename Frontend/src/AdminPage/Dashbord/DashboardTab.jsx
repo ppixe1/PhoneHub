@@ -47,8 +47,8 @@ export default function DashboardTab() {
 
   const timeOptions = [
     { value: "today", label: "วันนี้" },
-    { value: "7days", label: "7 วันที่ผ่านมา" },
-    { value: "30days", label: "1 เดือนที่ผ่านมา" },
+    { value: "last7days", label: "7 วันล่าสุด" },
+    { value: "last30days", label: "1 เดือนล่าสุด" },
     { value: "all", label: "ทั้งหมด" }
   ];
 

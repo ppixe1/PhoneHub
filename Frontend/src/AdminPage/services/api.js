@@ -74,7 +74,7 @@ async function request(path, options = {}) {
 // ==========================================
 
 export async function getDashboardData(timeframe = 'today') {
-  return request(`/dashboard?timeframe=${encodeURIComponent(timeframe)}`);
+  return request(`/dashboard?period=${encodeURIComponent(timeframe)}`);
 }
 
 export async function getProducts() {
