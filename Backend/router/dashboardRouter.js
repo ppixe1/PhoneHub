@@ -50,8 +50,9 @@ router.get('/', (req, res) => {
     const newOrders = filteredData.filter((order) => order.status === 'pending').length;
     const pendingOrders = filteredData.filter((order) => order.status === 'pending').length;
     const waitingToShipOrders = filteredData.filter((order) => order.status === 'paid').length;
-    const ShippingOrders = filteredData.filter((order) => order.status === 'shipping').length;
+    const shippingOrders = filteredData.filter((order) => order.status === 'shipping').length;
     const completedOrders = filteredData.filter((order) => order.status === 'delivered').length;
+    const canceledOrders = filteredData.filter((order) => order.status === 'canceled' || order.status === 'refunded').length;
 
     db.query('SELECT * FROM products', (err, result2) => {
       if (err) return res.status(500).json({ msg: 'Server Error' });
@@ -90,7 +91,7 @@ router.get('/', (req, res) => {
         })
         .filter((product) => product.soldQuantity > 0)
         .sort((a, b) => b.soldQuantity - a.soldQuantity)
-        .slice(0, 5)
+        .slice(0, 3)
         .map((product, index) => ({ rank: index + 1, ...product }))
 
         res.status(200).json({
@@ -99,8 +100,9 @@ router.get('/', (req, res) => {
           newOrders,
           pendingOrders,
           waitingToShipOrders,
-          ShippingOrders,
+          shippingOrders,
           completedOrders,
+          canceledOrders,
           totalView,
           topProductsList
         })

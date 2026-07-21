@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   Users, BadgeDollarSign, Clock, ShoppingCart, Sparkles, Truck, 
-  CheckCircle2, XCircle, Package, TrendingUp, Medal, 
+  CheckCircle2, XCircle, Road, Package, TrendingUp, Medal, 
   ChevronDown, Calendar, Check 
 } from 'lucide-react';
 // สังเกตว่าเราลบการดึง mockData ออกไปแล้ว และใช้แค่ api อย่างเดียว
@@ -13,16 +13,7 @@ export default function DashboardTab() {
   const [isLoading, setIsLoading] = useState(false);
   
   // กำหนดโครงสร้างข้อมูลว่างๆ ไว้ป้องกันหน้าเว็บพังระหว่างรอ Backend ส่งข้อมูลมาให้
-  const [dashboardData, setDashboardData] = useState({
-    summary: { visitors: "0", totalSales: "0.-", pendingOrders: "0", topProduct: "-" },
-    logistics: [
-      { title: "ที่ต้องจัดส่ง", value: "0" },
-      { title: "รอเข้ารับ", value: "0" },
-      { title: "สำเร็จ", value: "0" },
-      { title: "ตีกลับ", value: "0" }
-    ],
-    topSellers: []
-  });
+  const [dashboardData, setDashboardData] = useState({});
 
   useEffect(() => {
     let active = true;
@@ -115,41 +106,70 @@ export default function DashboardTab() {
       <div className="mb-5" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
         <div className="bg-white p-4 rounded-4 shadow-sm border d-flex align-items-center gap-3">
           <div className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '50px', height: '50px', backgroundColor: '#FEE2E2', color: '#B00000' }}><Users style={{ width: '24px', height: '24px' }} /></div>
-          <div><p className="fw-semibold text-muted mb-1" style={{ fontSize: '12px' }}>คนเข้าชมเว็บ</p><h3 className="fw-bold m-0" style={{ fontSize: '22px' }}>{dashboardData.summary.visitors}</h3></div>
+          <div><p className="fw-semibold text-muted mb-1" style={{ fontSize: '12px' }}>คนเข้าชมเว็บ</p><h3 className="fw-bold m-0" style={{ fontSize: '22px' }}>{dashboardData.totalView}</h3></div>
         </div>
         <div className="bg-white p-4 rounded-4 shadow-sm border d-flex align-items-center gap-3">
           <div className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '50px', height: '50px', backgroundColor: '#FEF3C7', color: '#B00000' }}><BadgeDollarSign style={{ width: '24px', height: '24px' }} /></div>
-          <div><p className="fw-semibold text-muted mb-1" style={{ fontSize: '12px' }}>ยอดขาย (บาท)</p><h3 className="fw-bold m-0" style={{ fontSize: '22px' }}>{dashboardData.summary.totalSales}</h3></div>
+          <div><p className="fw-semibold text-muted mb-1" style={{ fontSize: '12px' }}>ยอดขาย (บาท)</p><h3 className="fw-bold m-0" style={{ fontSize: '22px' }}>{dashboardData.totalPrice.toLocaleString()}</h3></div>
         </div>
         <div className="bg-white p-4 rounded-4 shadow-sm border d-flex align-items-center gap-3">
           <div className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '50px', height: '50px', backgroundColor: '#FEE2E2', color: '#B00000' }}><Clock style={{ width: '24px', height: '24px' }} /></div>
-          <div><p className="fw-semibold text-muted mb-1" style={{ fontSize: '12px' }}>ออเดอร์ใหม่</p><h3 className="fw-bold m-0" style={{ fontSize: '22px' }}>{dashboardData.summary.pendingOrders}</h3></div>
+          <div><p className="fw-semibold text-muted mb-1" style={{ fontSize: '12px' }}>ออเดอร์ใหม่</p><h3 className="fw-bold m-0" style={{ fontSize: '22px' }}>{dashboardData.pendingOrders}</h3></div>
         </div>
         <div className="bg-white p-4 rounded-4 shadow-sm border d-flex align-items-center gap-3">
           <div className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '50px', height: '50px', backgroundColor: '#FEE2E2', color: '#B00000' }}><ShoppingCart style={{ width: '24px', height: '24px' }} /></div>
-          <div><p className="fw-semibold text-muted mb-1" style={{ fontSize: '12px' }}>ออเดอร์ทั้งหมด</p><h3 className="fw-bold m-0" style={{ fontSize: '22px' }}>{totalOrdersCount.toLocaleString()}</h3></div>
+          <div><p className="fw-semibold text-muted mb-1" style={{ fontSize: '12px' }}>ออเดอร์ทั้งหมด</p><h3 className="fw-bold m-0" style={{ fontSize: '22px' }}>{dashboardData.totalOrders}</h3></div>
         </div>
         <div className="bg-white p-4 rounded-4 shadow-sm border d-flex align-items-center gap-3">
           <div className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '50px', height: '50px', backgroundColor: '#FEF3C7', color: '#B00000' }}><Sparkles style={{ width: '24px', height: '24px' }} /></div>
-          <div><p className="fw-semibold text-muted mb-1" style={{ fontSize: '12px' }}>สินค้าขายดีสุด</p><h3 className="fw-bold m-0 text-truncate" style={{ fontSize: '16px', maxWidth: '120px' }}>{dashboardData.summary.topProduct}</h3></div>
+          <div><p className="fw-semibold text-muted mb-1" style={{ fontSize: '12px' }}>สินค้าขายดีสุด</p><h3 className="fw-bold m-0 text-truncate" style={{ fontSize: '16px', maxWidth: '120px' }} title={dashboardData.topProductsList?.[0]?.name || '-'}>{dashboardData.topProductsList?.[0]?.name || '-'}</h3></div>
         </div>
       </div>
 
       <div className="mb-5">
         <h3 className="d-flex align-items-center gap-2 fw-bold mb-4" style={{ fontSize: '18px' }}><Truck style={{ width: '22px', height: '22px', color: '#B00000' }} /> ภาพรวมการจัดส่ง (Logistics)</h3>
-        <div className="row g-4">
-          {dashboardData.logistics.map((item, idx) => {
-            const style = logisticsStyles[idx] || logisticsStyles[0];
-            return (
-              <div key={idx} className="col-12 col-sm-6 col-lg-3">
-                <div className="bg-white p-4 rounded-4 shadow-sm border text-center h-100">
-                  <div className="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ width: '60px', height: '60px', backgroundColor: style.bg, color: style.color }}>{style.icon}</div>
-                  <h4 className="fw-bold m-0 mb-2" style={{ fontSize: '28px' }}>{item.value}</h4>
-                  <p className="fw-semibold text-muted m-0" style={{ fontSize: '14px' }}>{item.title}</p>
-                </div>
-              </div>
-            );
-          })}
+        <div className="w-100 d-flex justify-content-between align-items-center gap-4">
+
+          <div className="w-100">
+            <div className="bg-white p-4 rounded-4 shadow-sm border text-center h-100">
+              <div className="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ width: '60px', height: '60px', backgroundColor: '#EFF6FF', color: '#3B82F6' }}><Package style={{ width: '24px', height: '24px' }} /></div>
+              <h4 className="fw-bold m-0 mb-2" style={{ fontSize: '28px' }}>{dashboardData.pendingOrders}</h4>
+              <p className="fw-semibold text-muted m-0" style={{ fontSize: '14px' }}>ที่ต้องจัดส่ง</p>
+            </div>
+          </div>
+
+          <div className="w-100">
+            <div className="bg-white p-4 rounded-4 shadow-sm border text-center h-100">
+              <div className="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ width: '60px', height: '60px', backgroundColor: '#fffaed', color: '#f1c70c' }}><Truck style={{ width: '24px', height: '24px' }} /></div>
+              <h4 className="fw-bold m-0 mb-2" style={{ fontSize: '28px' }}>{dashboardData.waitingToShipOrders}</h4>
+              <p className="fw-semibold text-muted m-0" style={{ fontSize: '14px' }}>รอเข้ารับ</p>
+            </div>
+          </div>
+
+          <div className="w-100">
+            <div className="bg-white p-4 rounded-4 shadow-sm border text-center h-100">
+              <div className="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ width: '60px', height: '60px', backgroundColor: '#FFF7ED', color: '#F97316' }}><Road style={{ width: '24px', height: '24px' }} /></div>
+              <h4 className="fw-bold m-0 mb-2" style={{ fontSize: '28px' }}>{dashboardData.shippingOrders}</h4>
+              <p className="fw-semibold text-muted m-0" style={{ fontSize: '14px' }}>อยู่ระหว่างการจัดส่ง</p>
+            </div>
+          </div>
+
+          <div className="w-100">
+            <div className="bg-white p-4 rounded-4 shadow-sm border text-center h-100">
+              <div className="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ width: '60px', height: '60px', backgroundColor: '#F0FDF4', color: '#22C55E' }}><CheckCircle2 style={{ width: '24px', height: '24px' }} /></div>
+              <h4 className="fw-bold m-0 mb-2" style={{ fontSize: '28px' }}>{dashboardData.completedOrders}</h4>
+              <p className="fw-semibold text-muted m-0" style={{ fontSize: '14px' }}>จัดส่งสำเร็จ</p>
+            </div>
+          </div>
+
+          <div className="w-100">
+            <div className="bg-white p-4 rounded-4 shadow-sm border text-center h-100">
+              <div className="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ width: '60px', height: '60px', backgroundColor: '#FEF2F2', color: '#EF4444' }}><XCircle style={{ width: '24px', height: '24px' }} /></div>
+              <h4 className="fw-bold m-0 mb-2" style={{ fontSize: '28px' }}>{dashboardData.canceledOrders}</h4>
+              <p className="fw-semibold text-muted m-0" style={{ fontSize: '14px' }}>สินค้าตีกลับ</p>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -168,7 +188,7 @@ export default function DashboardTab() {
               </tr>
             </thead>
             <tbody>
-              {dashboardData.topSellers.map((item) => (
+              {dashboardData.topProductsList?.map((item) => (
                 <tr key={item.rank} style={{ fontSize: '15px', borderBottom: '1px solid #f8f9fa' }}>
                   <td className="text-center py-3">
                     {item.rank === 1 ? <Medal style={{ width: '28px', height: '28px', color: '#F59E0B' }} /> : 
@@ -177,8 +197,8 @@ export default function DashboardTab() {
                      <span className="fw-bold text-muted">{item.rank}</span>}
                   </td>
                   <td className="fw-bold text-dark py-3">{item.name}</td>
-                  <td className="text-center fw-semibold py-3">{item.qty} ชิ้น</td>
-                  <td className="text-end fw-bold py-3 pe-4" style={{ color: '#10B981' }}>{item.total}</td>
+                  <td className="text-center fw-semibold py-3">{item.soldQuantity} ชิ้น</td>
+                  <td className="text-end fw-bold py-3 pe-4" style={{ color: '#10B981' }}>{item.totalSales?.toLocaleString()}</td>
                 </tr>
               ))}
             </tbody>
