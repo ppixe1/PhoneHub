@@ -3,10 +3,13 @@ const router = express.Router();
 const db = require('../db.js');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
+const multer = require('multer');
 
 dotenv.config();
 
 const secret_key = process.env.SECRET_KEY;
+
+const upload = multer({ dest: 'uploads/' });
 
 // Get all products
 router.get('/', (req, res) => {
@@ -19,7 +22,7 @@ router.get('/', (req, res) => {
 
 
 // crate product
-router.post('/', (req, res) => {
+router.post('/', upload.single('img'), (req, res) => {
   const {
     brand,
     model,
@@ -34,10 +37,14 @@ router.post('/', (req, res) => {
   const imgString = typeof img === 'object' ? JSON.stringify(img) : img;
   const specificationsString = typeof specifications === 'object' ? JSON.stringify(specifications) : specifications;
 
+  // const variationObj = typeof variation === 'object' ? variation : JSON.parse(variation);
+  // const imageFile = req.file
+  // const specificationsObj = typeof specifications === 'object' ? specifications : JSON.parse(specifications);
+
   db.query('INSERT INTO products (brand, model, variation, img, specifications) VALUES(?,?,?,?,?)',
   [brand, model, variationString, imgString, specificationsString],
   (err, result) => {
-    if (err) return res.status(500).json({ msg: err });
+    if (err) return console.log(err);
 
     const newProduct = {
       id: result.insertId,
@@ -55,7 +62,7 @@ router.post('/', (req, res) => {
 
 
 // update product data by ID
-router.put('/:id', (req, res) => {
+router.put('/:id', upload.single('img'), (req, res) => {
   const id = req.params.id;
   if (!id) return res.status(400).json({ msg: 'กรุณากรอกรหัสสินค้าให้ครบถ้วน' });
 
@@ -72,6 +79,10 @@ router.put('/:id', (req, res) => {
   const variationString = typeof variation === 'object' ? JSON.stringify(variation) : variation;
   const imgString = typeof img === 'object' ? JSON.stringify(img) : img;
   const specificationsString = typeof specifications === 'object' ? JSON.stringify(specifications) : specifications;
+
+  // const variationObj = typeof variation === 'object' ? variation : JSON.parse(variation);
+  // const imageFile = req.file
+  // const specificationsObj = typeof specifications === 'object' ? specifications : JSON.parse(specifications);
 
   db.query('UPDATE products SET brand = ?, model = ?, variation = ?, img = ?, specifications = ? WHERE id = ?',
   [brand, model, variationString, imgString, specificationsString, id],

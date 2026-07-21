@@ -80,7 +80,7 @@ export default function InventoryTab() {
           os: specs.os || "",
           connectivity: specs.connections || "",
           variations: mappedVariations, // ใช้ข้อมูล mappedVariations
-          image: (Array.isArray(images) ? images[0] : images) || "https://via.placeholder.com/150",
+          image: images[0] || item.img,
           totalStock,
           views: item.views || 0,
           sold: item.sold || 0,
@@ -168,40 +168,49 @@ export default function InventoryTab() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    
-    const payload = {
-      brand: formData.brand,
-      model: formData.name, 
-      variation: formData.variations.map(v => ({
-        storage: v.storage, // บันทึกความจุแยกตามรายการ
+    // setIsSubmitting(true);
+
+    const formPayload = new FormData();
+
+    formPayload.append("brand", formData.brand);
+    formPayload.append("model", formData.name);
+
+    formPayload.append('variation', JSON.stringify(
+      formData.variations.map(v => ({
+        storage: v.storage,
         color: v.color,
         stock: String(v.stock || "0"),
         price: String(v.price || "0")
-      })),
-      img: [formData.image || "https://img.magnific.com/premium-vector/nothing-rubber-stamp-seal-vector_140916-33167.jpg?semt=ais_hybrid&w=740&q=80"],
-      specifications: {
-        screenSize: formData.screenSize,
-        screenType: formData.screenType,
-        refreshRate: formData.refreshRate,
-        chipset: formData.cpu,
-        backCamera: formData.backCam,
-        frontCamera: formData.frontCam,
-        batteryLife: formData.battery,
-        fastCharge: formData.charging,
-        os: formData.os,
-        connections: formData.connectivity,
-        highlights: formData.privilege,
-        // ram: formData.ram,
-        // promoPrice: formData.promoPrice
-      }
-    };
+      }))
+    ))
+
+
+    formPayload.append("img", formData.image || "https://img.magnific.com/premium-vector/nothing-rubber-stamp-seal-vector_140916-33167.jpg?semt=ais_hybrid&w=740&q=80");
+
+
+    formPayload.append("specifications", JSON.stringify({
+      screenSize: formData.screenSize,
+      screenType: formData.screenType,
+      refreshRate: formData.refreshRate,
+      chipset: formData.cpu,
+      backCamera: formData.backCam,
+      frontCamera: formData.frontCam,
+      batteryLife: formData.battery,
+      fastCharge: formData.charging,
+      os: formData.os,
+      connections: formData.connectivity,
+      highlights: formData.privilege,
+      // ram: formData.ram,
+      // promoPrice: formData.promoPrice
+    }));
+    
+    console.log(Object.fromEntries(formPayload))
 
     try {
       if (editingId) {
-        await updateProduct(editingId, payload);
+        await updateProduct(editingId, formPayload);
       } else {
-        await createProduct(payload);
+        await createProduct(formPayload);
       }
       
       await fetchInventory();

@@ -22,7 +22,8 @@ export default function TabMenu({ activeTab, setActiveTab }) {
                 borderBottomColor: activeTab === tab.id ? '#B00000' : 'transparent',
                 color: activeTab === tab.id ? '#B00000' : '#6c757d',
                 fontWeight: '600',
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                cursor: 'pointer'
               }}
             >
               {tab.icon} {tab.label}
