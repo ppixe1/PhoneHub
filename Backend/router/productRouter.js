@@ -103,6 +103,20 @@ router.put('/:id', upload.single('img'), (req, res) => {
 })
 
 
+// Add View Product count
+router.put('/view/:id', (req, res) => {
+  const id = req.params.id;
+  if (!id) return res.status(400).json({ msg: 'เกิดข้อผิดพลาด' });
+
+  db.query('UPDATE products SET view_count = view_count + 1 WHERE id = ?',
+  [id],
+  (err, result) => {
+    if (err) return res.status(500).json({ msg: 'Server Error' });
+    res.status(200);
+  })
+})
+
+
 
 // delete product by ID
 router.delete('/:id', (req, res) => {

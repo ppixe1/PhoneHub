@@ -136,17 +136,62 @@ router.post('/', (req, res) => {
       (err, result2) => {
         if (err) return res.status(500).json({ msg: 'Server Error' });
         
-        const orderItemsPurchase = items.map(item => [
-          item.id
-        ])
-
+        const orderItemsPurchase = items.map(item => [item.id])
         const orderItemsPurchaseQuery = 'DELETE FROM cartitems WHERE id IN (?)';
+
         db.query(orderItemsPurchaseQuery, [orderItemsPurchase],
           (err, result3) => {
             if (err) return res.status(500).json({ msg: 'Server Error' });
 
-            res.status(200).json({ msg: 'สั่งซื้อสินค้าสําเร็จ!' });
-          }
+            const updateStockPromises = items.map((item) => {
+              return new Promise((resolve, reject) => {
+                db.query('SELECT variation FROM products WHERE id = ?', [item.product_id], (err, rows) => {
+                  if (err || rows.length === 0) return reject(err || new Error('Product not found'));
+
+                  let variations = [];
+                  try {
+                    variations = typeof rows[0].variation === 'string' 
+                      ? JSON.parse(rows[0].variation) 
+                      : rows[0].variation;
+                  } catch (e) {
+                    variations = [];
+                  }
+
+                  let updated = false;
+                  variations = variations.map(v => {
+                    if (v.storage === item.storage && v.color === item.color) {
+                      const currentStock = Number(v.stock || 0);
+                      const buyQty = Number(item.quantity || 1);
+                      v.stock = Math.max(0, currentStock - buyQty);
+                      updated = true;
+                    }
+                    return v;
+                  });
+
+                  const updateSql = `
+                    UPDATE products 
+                    SET sales_count = sales_count + ?, 
+                        variation = ? 
+                    WHERE id = ?
+                  `;
+
+                  db.query(updateSql, [item.quantity, JSON.stringify(variations), item.product_id], (err, result) => {
+                    if (err) return reject(err);
+                    resolve(result);
+                  });
+                });
+              });
+            });
+
+            Promise.all(updateStockPromises)
+            .then(() => {
+              return res.status(200).json({ msg: 'สั่งซื้อสินค้าสำเร็จ!' });
+            })
+            .catch((error) => {
+              console.error('Update Stock Error:', error);
+              return res.status(500).json({ msg: 'เกิดข้อผิดพลาดในการตัดสต็อก' });
+            });
+            }
         )
       }
     );

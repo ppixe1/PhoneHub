@@ -210,6 +210,17 @@ export default function Products({
     fetchProducts();
   }, []);
 
+  const updateProductView = (id) => {
+    if (!id) return
+    
+    axios.put(`${API_BASE_URL}/product/view/${id}`)
+    .then((res) => {
+      if (res.status === 200) {
+        alert(res.data.msg);
+      }
+    })
+  }
+
   // ตั้งค่า Default สีและความจุ เมื่อเปิดดูหน้ารายละเอียดสินค้า
   useEffect(() => {
     if (selectedProduct) {
@@ -781,8 +792,9 @@ export default function Products({
               <div
                 key={product.id}
                 onClick={() => {
-                  setSelectedProduct(product)
+                  setSelectedProduct(product);
                   window.scrollTo(0, 0);
+                  updateProductView(product.id);
                 }}
                 style={{ backgroundColor: '#fff', border: '1px solid #eee', padding: '15px', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 2px 10px rgba(0,0,0,0.03)', transition: 'transform 0.2s' }}
                 onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-4px)')}

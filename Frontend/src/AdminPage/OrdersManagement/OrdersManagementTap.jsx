@@ -33,7 +33,7 @@ export default function OrdersManagementTap() {
         if (mounted) {
           // ถ้า data ส่งมาเป็น Object { orders: [...] } ให้แตกหยิบเอาเฉพาะ array ด้านใน
           const ordersArray = data && data.orders ? data.orders : (Array.isArray(data) ? data : []);
-          setOrders(ordersArray);
+          setOrders(ordersArray.reverse());
         }
       } catch (err) {
         console.error(err);

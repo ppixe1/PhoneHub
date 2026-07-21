@@ -106,11 +106,11 @@ export default function DashboardTab() {
       <div className="mb-5" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
         <div className="bg-white p-4 rounded-4 shadow-sm border d-flex align-items-center gap-3">
           <div className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '50px', height: '50px', backgroundColor: '#FEE2E2', color: '#B00000' }}><Users style={{ width: '24px', height: '24px' }} /></div>
-          <div><p className="fw-semibold text-muted mb-1" style={{ fontSize: '12px' }}>คนเข้าชมเว็บ</p><h3 className="fw-bold m-0" style={{ fontSize: '22px' }}>{dashboardData.totalView}</h3></div>
+          <div><p className="fw-semibold text-muted mb-1" style={{ fontSize: '12px' }}>คนเข้าชมสินค้า</p><h3 className="fw-bold m-0" style={{ fontSize: '22px' }}>{dashboardData.totalView}</h3></div>
         </div>
         <div className="bg-white p-4 rounded-4 shadow-sm border d-flex align-items-center gap-3">
           <div className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '50px', height: '50px', backgroundColor: '#FEF3C7', color: '#B00000' }}><BadgeDollarSign style={{ width: '24px', height: '24px' }} /></div>
-          <div><p className="fw-semibold text-muted mb-1" style={{ fontSize: '12px' }}>ยอดขาย (บาท)</p><h3 className="fw-bold m-0" style={{ fontSize: '22px' }}>{dashboardData.totalPrice.toLocaleString()}</h3></div>
+          <div><p className="fw-semibold text-muted mb-1" style={{ fontSize: '12px' }}>ยอดขาย (บาท)</p><h3 className="fw-bold m-0" style={{ fontSize: '22px' }}>{dashboardData.totalPrice?.toLocaleString()}</h3></div>
         </div>
         <div className="bg-white p-4 rounded-4 shadow-sm border d-flex align-items-center gap-3">
           <div className="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style={{ width: '50px', height: '50px', backgroundColor: '#FEE2E2', color: '#B00000' }}><Clock style={{ width: '24px', height: '24px' }} /></div>
