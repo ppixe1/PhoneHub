@@ -168,7 +168,7 @@ export default function InventoryTab() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // setIsSubmitting(true);
+    setIsSubmitting(true);
 
     const formPayload = new FormData();
 

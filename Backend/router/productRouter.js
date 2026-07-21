@@ -23,39 +23,34 @@ router.get('/', (req, res) => {
 
 // crate product
 router.post('/', upload.single('img'), (req, res) => {
-  const {
-    brand,
-    model,
-    variation, //rom-color-stock-price
-    img,
-    specifications,
-  } = req.body;
-  
-  if (!brand || !model || !variation || !img || !specifications) return res.status(400).json({ msg: 'กรุณากรอกข้อมูลให้ครบถ้วน' });
+  const productsList = Array.isArray(req.body) ? req.body : [req.body];
+
+  if (!productsList || productsList.length === 0) {
+    return res.status(400).json({ msg: 'ไม่พบข้อมูลสินค้าที่ต้องการเพิ่ม' });
+  }
+
+  const valuesToInsert = [];
+
+  for (const item of productsList) {
+    const { brand, model, variation, img, specifications } = item;
+
+    if (!brand || !model || !variation || !img || !specifications) {
+      return res.status(400).json({ msg: 'มีสินค้าบางรายการกรอกข้อมูลไม่ครบถ้วน' });
+    }
 
   const variationString = typeof variation === 'object' ? JSON.stringify(variation) : variation;
   const imgString = typeof img === 'object' ? JSON.stringify(img) : img;
   const specificationsString = typeof specifications === 'object' ? JSON.stringify(specifications) : specifications;
 
-  // const variationObj = typeof variation === 'object' ? variation : JSON.parse(variation);
-  // const imageFile = req.file
-  // const specificationsObj = typeof specifications === 'object' ? specifications : JSON.parse(specifications);
+  valuesToInsert.push([brand, model, variationString, imgString, specificationsString]);
+  }
 
-  db.query('INSERT INTO products (brand, model, variation, img, specifications) VALUES(?,?,?,?,?)',
-  [brand, model, variationString, imgString, specificationsString],
-  (err, result) => {
-    if (err) return console.log(err);
+  const sql = 'INSERT INTO products (brand, model, variation, img, specifications) VALUES ?';
 
-    const newProduct = {
-      id: result.insertId,
-      brand,
-      model,
-      variation,
-      img,
-      specifications
-    }
+  db.query(sql, [valuesToInsert], (err, result) => {
+    if (err) return res.status(500).json({ msg: 'Server Error' });
 
-    res.status(200).json({ msg: 'สร้างสินค้าสําเร็จ!', newProduct });
+    res.status(200).json({ msg: 'สร้างสินค้าสําเร็จ!' });
   })
 })
 
