@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './OrderHistory.css';
 import { jwtDecode } from 'jwt-decode';
+import { toast } from 'sonner';
 
 // ข้อมูลจำลองประวัติออเดอร์
 const mockOrders = [
@@ -77,18 +78,20 @@ function OrderTracking() {
 
   const getOrders = async () => {
     const token = sessionStorage.getItem('token');
-    if (!token) return alert('คุณไม่มี Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
+    if (!token) return toast.error('คุณไม่มี Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
 
     try {
       const token = sessionStorage.getItem('token');
-      if (!token) return alert('คุณไม่มี Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
+      if (!token) return toast.error('คุณไม่มี Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
 
       const data = jwtDecode(token);
 
       const res = await axios.get('http://localhost:3000/order')
       setOrders((res.data.orders).filter((order) => order.user_id === data.user_id));
     } catch (error) {
-      console.error('Error getting orders:', error);
+      if (error.response.status === 400 || error.response.status === 500) {
+        toast.error(error.response.data.msg);
+      }
     }
   }
 

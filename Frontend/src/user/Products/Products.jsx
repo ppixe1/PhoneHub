@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const theme = {
   primary: '#B00000',
@@ -80,10 +81,10 @@ export default function Products({
 
   const onAddToCart = () => {
     const token = sessionStorage.getItem('token')
-    if (!token) return alert('คุณไม่มี Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง')
+    if (!token) return toast.error('คุณไม่มี Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง')
 
     if (!selectedProduct || !selectedProduct.rawVariations) {
-      console.error("ไม่มีข้อมูลสินค้า");
+      toast.error("ไม่มีข้อมูลสินค้า");
       return;
     }
 
@@ -92,7 +93,7 @@ export default function Products({
       item.storage === selectedStorage && item.color === selectedColor.name
   );
 
-    if (selectedColor.name === null || selectedStorage === null || matchedVariation.price === null || selectedQuantity === null || selectedProduct === null) return alert('กรุณาเลือกสเปกสินค้าที่ต้องการก่อนเพิ่มในตะกร้า')
+    if (selectedColor.name === null || selectedStorage === null || matchedVariation.price === null || selectedQuantity === null || selectedProduct === null) return toast.warning('กรุณาเลือกสเปกสินค้าที่ต้องการก่อนเพิ่มในตะกร้า')
     axios.post(`${API_BASE_URL}/cart`, {
       product_id: selectedProduct.id,
       color: selectedColor.name,
@@ -108,10 +109,14 @@ export default function Products({
       }
     })
     .then((res) => {
-      if (!res) return alert('เกิดข้อผิดพลาด');
+      if (!res) return toast.error('เกิดข้อผิดพลาด');
       if (res.status === 200) {
-        alert(res.data.msg);
-        
+        toast.success(res.data.msg);
+      }
+    })
+    .catch((err) => {
+      if (err.response.status === 400 || err.response.status === 500) {
+        toast.error(err.response.data.msg);
       }
     })
   }
@@ -216,7 +221,12 @@ export default function Products({
     axios.put(`${API_BASE_URL}/product/view/${id}`)
     .then((res) => {
       if (res.status === 200) {
-        alert(res.data.msg);
+        toast.success(res.data.msg);
+      }
+    })
+    .catch((err) => {
+      if (err.response.status === 400 || err.response.status === 500) {
+        toast.error(err.response.data.msg);
       }
     })
   }
@@ -353,7 +363,7 @@ export default function Products({
         </div>
 
         <div
-          onClick={onLogout || (() => alert('ออกจากระบบเรียบร้อย!'))}
+          onClick={onLogout || (() => toast.success('ออกจากระบบเรียบร้อย!'))}
           style={{
             display: 'flex',
             alignItems: 'center',

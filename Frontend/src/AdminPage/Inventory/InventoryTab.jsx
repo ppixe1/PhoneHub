@@ -1,6 +1,7 @@
 ﻿import React, { useState, useRef, useEffect } from "react";
 import { Trash2, Plus, Search, Eye, AlertCircle, Image as ImageIcon, Tag, Cpu, Palette, X, ChevronDown, ListFilter, CheckCircle2 } from "lucide-react";
 import { getProducts, createProduct, updateProduct, deleteProduct } from '../services/api';
+import { toast } from 'sonner';
 
 export default function InventoryTab() {
 
@@ -89,8 +90,10 @@ export default function InventoryTab() {
       
       setProducts(formattedData);
     } catch (error) {
-      console.error("Error fetching products:", error);
-      alert("ไม่สามารถดึงข้อมูลสินค้าได้");
+      if (error) {
+        console.error("Error fetching products:", error);
+        toast.error("ไม่สามารถดึงข้อมูลสินค้าได้");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -142,7 +145,7 @@ export default function InventoryTab() {
         setProducts(products.filter((p) => p.id !== id));
       } catch (error) {
         console.error("Error deleting product:", error);
-        alert("เกิดข้อผิดพลาดในการลบสินค้า");
+        toast.error("เกิดข้อผิดพลาดในการลบสินค้า");
       }
     }
   };
@@ -216,8 +219,10 @@ export default function InventoryTab() {
       await fetchInventory();
       setShowModal(false);
     } catch (error) {
-      console.error("Error saving product:", error);
-      alert("ไม่สามารถบันทึกข้อมูลได้ โปรดตรวจสอบเซิร์ฟเวอร์");
+      if (error) {
+        console.error("Error saving product:", error);
+        toast.error("เกิดข้อผิดพลาด ไม่สามารถบันทึกข้อมูลได้");
+      }
     } finally {
       setIsSubmitting(false);
     }

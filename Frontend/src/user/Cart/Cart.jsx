@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 import Payment from '../Payment/Payment';
 
@@ -118,7 +119,7 @@ export default function Cart() {
   };
 
   const onNextStep = () => {
-    if (selectedCartItems.length === 0) return alert('กรุณาเลือกสินค้าก่อนชำระเงิน');
+    if (selectedCartItems.length === 0) return toast.warning('กรุณาเลือกสินค้าก่อนชำระเงิน');
     
     navigate('/payment', { state: { selectedCartItems, totalAmount } });
     window.scrollTo(0, 0);

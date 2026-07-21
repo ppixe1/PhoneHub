@@ -1,4 +1,5 @@
 import { Route, Routes } from 'react-router-dom'
+import { Toaster } from 'sonner';
 
 // ######### assets #########
 import './App.css'
@@ -17,6 +18,7 @@ import OrderHistory from './user/OrderHistory/OrderHistory'
 function App() {
   return (
     <>
+      <Toaster position="top-right" richColors />
       <Routes>
         <Route path='/' element={<GuestLayout />} />
         <Route path='/home' element={<HomeLayout />} />

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, ChevronDown, ListFilter, CheckCircle2, Clock, Package, Truck, XCircle, RefreshCw } from 'lucide-react';
 import { getOrders, updateOrderStatus } from '../services/api';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 // 1. แผนผังสำหรับจัดการแปลงค่า Status ระหว่างหน้าบ้าน (ไทย) และหลังบ้าน DB (อังกฤษ)
 const STATUS_MAP = {
@@ -93,10 +94,12 @@ export default function OrdersManagementTap() {
       );
       setIsModalOpen(false);
       setSelectedOrder(null);
-      alert('บันทึกสถานะคำสั่งซื้อสําเร็จ');
+      toast.success('บันทึกสถานะคำสั่งซื้อสําเร็จ');
     } catch (err) {
-      console.error(err);
-      window.alert('ไม่สามารถบันทึกสถานะคำสั่งซื้อได้ โปรดลองอีกครั้ง');
+      if (err) {
+        console.error(err);
+        toast.error('ไม่สามารถบันทึกสถานะคำสั่งซื้อได้ โปรดลองอีกครั้งในภายหลัง');
+      }
     } finally {
       setIsSaving(false);
     }

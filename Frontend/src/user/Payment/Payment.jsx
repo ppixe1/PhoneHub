@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 const theme = {
   primary: '#B00000',
@@ -37,7 +38,7 @@ export default function Payment() {
   const handlePayment = () => {
     // ตรวจสอบค่า address ก่อนการสั่งซื้อ
     if (!address.fullName || !address.phone || !address.houseNo || !address.subDistrict || !address.district || !address.province || !address.postalCode) {
-      alert('กรุณากรอกข้อมูลที่อยู่ให้ครบ');
+      toast.warning('กรุณากรอกข้อมูลที่อยู่ให้ครบ');
       return;
     }
 
@@ -58,13 +59,14 @@ export default function Payment() {
       }
     })
     .then(res => {
-      alert('สั่งซื้อสินค้าเรียบร้อยแล้ว');
+      toast.success(res.data.msg);
       navigate('/order-history');
       window.scrollTo(0, 0);
     })
     .catch(error => {
-      // console.error('Error creating order:', error.response.data.err);
-      alert('เกิดข้อผิดพลาดในการสั่งซื้อ');
+      if (error.response.status === 400 || error.response.status === 500) {
+        toast.error(error.response.data.msg);
+      }
     });
   };
 

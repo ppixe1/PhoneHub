@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const theme = {
   primary: '#B00000',
@@ -24,11 +25,11 @@ export default function Auth() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (isForgotPassword) {
-      alert(`ส่งลิงก์กู้คืนรหัสผ่านไปยัง ${username} เรียบร้อยแล้ว`);
+      toast.success(`ส่งลิงก์กู้คืนรหัสผ่านไปยัง ${username} เรียบร้อยแล้ว`);
       setIsForgotPassword(false);
       setIsLogin(true);
     } else if (!isLogin) {
-      alert(`สมัครสมาชิกสำเร็จ!\nUsername: ${registerUsername}\nชื่อ: ${fullName}\nอีเมล: ${email}\nเบอร์โทร: ${phone}`);
+      toast.success(`สมัครสมาชิกสำเร็จ!\nUsername: ${registerUsername}\nชื่อ: ${fullName}\nอีเมล: ${email}\nเบอร์โทร: ${phone}`);
       setIsLogin(true); 
     } else if (username.trim()) {
       // onLoginSuccess({ name: username, id: 'USER-007' });
@@ -49,11 +50,16 @@ export default function Auth() {
           password: password,
         })
         .then((res) => {
-          if (!res) return alert('เกิดข้อผิดพลาด');
+          if (!res) return toast.error('เกิดข้อผิดพลาด');
           if (res.status === 200) {
-            alert(res.data.msg);
+            toast.success(res.data.msg);
             sessionStorage.setItem('token', res.data.token);
             navigate('/home')
+          }
+        })
+        .catch((err) => {
+          if (err.response.status === 400 || err.response.status === 500) {
+            toast.error(err.response.data.msg);
           }
         })
       }
@@ -68,9 +74,9 @@ export default function Auth() {
           name: fullName,
         })
         .then((res) => {
-          if (!res) return alert('เกิดข้อผิดพลาด');
+          if (!res) return toast.error('เกิดข้อผิดพลาด');
           if (res.status === 200) {
-            alert(res.data.msg);
+            toast.success(res.data.msg);
             sessionStorage.setItem('token', res.data.token);
             navigate('/home')
           }
