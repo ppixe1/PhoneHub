@@ -75,6 +75,10 @@
 * เพิ่มสินค้าในตะกร้าสินค้า
 * สั่งซื้อสินค้าและชำระเงิน
 * ติดตามสถานะคำสั่งซื้อ
+<<<<<<< HEAD
+=======
+
+>>>>>>> ee6365d86a1ec150c43bb17723faee565a9c9851
 
 ###  ผู้ดูแลระบบ (Admin)
 * ระบบจัดการ User 
@@ -172,92 +176,8 @@
 ## 11.Class Diagram
 แสดงโครงสร้างของระบบ PhoneHub รวมถึงแอตทริบิวต์ (Attributes), เมธอด (Methods) และความสัมพันธ์ระหว่างคลาส:
 
-```mermaid
-classDiagram
-    direction TB
+<img width="721" height="889" alt="image" src="https://media.discordapp.net/attachments/1339783101164945500/1529346872366469262/Class-D-PhoneHub.drawio.png?ex=6a619ac4&is=6a604944&hm=8a195acd6e0106af60e08d1b621b2c876837a0ee3a2de595f899192c7c8a31c7&=&format=webp&quality=lossless" />
 
-    class User {
-        +int user_id
-        +String username
-        +String email
-        +String password
-        +String role
-        +register()
-        +login()
-        +updateProfile()
-    }
-
-    class Product {
-        +int product_id
-        +String name
-        +String brand
-        +double price
-        +int stock
-        +String description
-        +String image_url
-        +updateStock()
-        +getDetails()
-    }
-
-    class Cart {
-        +int cart_id
-        +int user_id
-        +double total_price
-        +addItem()
-        +removeItem()
-        +clearCart()
-    }
-
-    class CartItem {
-        +int cart_item_id
-        +int cart_id
-        +int product_id
-        +int quantity
-        +double price
-    }
-
-    class Order {
-        +int order_id
-        +int user_id
-        +double total_amount
-        +String order_status
-        +String tracking_number
-        +Date created_at
-        +updateStatus()
-        +trackOrder()
-    }
-
-    class OrderItem {
-        +int order_item_id
-        +int order_id
-        +int product_id
-        +int quantity
-        +double price
-    }
-
-    class Payment {
-        +int payment_id
-        +int order_id
-        +double amount
-        +String payment_method
-        +String payment_status
-        +Date payment_date
-        +processPayment()
-        +checkStatus()
-    }
-
-    %% ความสัมพันธ์ (Relationships)
-    User "1" --> "1" Cart : has 
-    User "1" --> "*" Order : places 
-    
-    Cart "1" *-- "*" CartItem : contains 
-    CartItem "*" --> "1" Product : references
-    
-    Order "1" *-- "*" OrderItem : contains 
-    OrderItem "*" --> "1" Product : references
-    
-    Order "1" --> "1" Payment : requires 
-```
 ---
 <a id="sequence"></a>
 ## 12.Sequence Diagram
@@ -370,7 +290,6 @@ graph TD
 | UAT-C05 | ระบบสั่งซื้อสินค้า  | ✅ <span style="color: green;">ผ่าน</span><br>⬜ ไม่ผ่าน | ⬜ ระบบทำงานไม่ตรงตามความต้องการ<br>⬜ ปัญหาเกี่ยวกับหน้าจอและการใช้งาน<br>⬜ ปัญหาเกี่ยวกับข้อมูล | |
 | UAT-C06 | ระบบชำระเงิน  | ✅ <span style="color: green;">ผ่าน</span><br>⬜ ไม่ผ่าน | ⬜ ระบบทำงานไม่ตรงตามความต้องการ<br>⬜ ปัญหาเกี่ยวกับหน้าจอและการใช้งาน<br>⬜ ปัญหาเกี่ยวกับข้อมูล | |
 | UAT-C07 | ระบบติดตามสถานะคำสั่งซื้อ ) | ✅ <span style="color: green;">ผ่าน</span><br>⬜ ไม่ผ่าน | ⬜ ระบบทำงานไม่ตรงตามความต้องการ<br>⬜ ปัญหาเกี่ยวกับหน้าจอและการใช้งาน<br>⬜ ปัญหาเกี่ยวกับข้อมูล | |
-| UAT-C08 | ระบบจัดอันดับมือถือยอดนิยม ) | ⬜ ผ่าน<br>❌ <span style="color: red;">ไม่ผ่าน</span> | ❌ <span style="color: red;">ระบบทำงานไม่ตรงตามความต้องการ</span><br>⬜ ปัญหาเกี่ยวกับหน้าจอและการใช้งาน<br>❌ <span style="color: red;">ปัญหาเกี่ยวกับข้อมูล</span> | ระบบยังไม่สามารถดึงข้อมูลยอดขายจริงมาคำนวณเพื่อจัดอันดับได้อย่างถูกต้อง  |
 
 ---
 
@@ -386,18 +305,17 @@ graph TD
 ### สรุปผลการทดสอบ User Acceptance Testing (UAT) จำนวน Test Case ทั้งหมด 12 รายการ
 
 **อัตราการผ่านการทดสอบ (Success Rate Metrics)**
-- จำนวนตัวเคสการทดสอบรวมทั้งหมด: 12 รายการ
+- จำนวนตัวเคสการทดสอบรวมทั้งหมด: 11 รายการ
 - จำนวนเคสที่ผ่านการทดสอบ (Pass): 10 รายการ
-- จำนวนเคสที่ไม่ผ่านการทดสอบ (Fail): 2 รายการ
+- จำนวนเคสที่ไม่ผ่านการทดสอบ (Fail): 1 รายการ
 
-**เปอร์เซ็นต์ความสำเร็จในการผ่านรอบทดสอบ: 83.33%**
+**เปอร์เซ็นต์ความสำเร็จในการผ่านรอบทดสอบ: 90.91%**
 
- - ซึ่งจากผลการทดสอบพบว่าฟังก์ชันพื้นฐานของระบบส่วนใหญ่ สามารถทำงานได้ตามที่ออกแบบไว้ได้อย่างสมบูรณ์ ไม่พบข้อผิดพลาดในกระบวนการสำคัญ เช่น ระบบตะกร้าสินค้า การสั่งซื้อ การชำระเงิน และการจัดการข้อมูลสินค้า อย่างไรก็ตาม ยังคงพบข้อผิดพลาดในฟังก์ชันบางส่วน ได้แก่ ระบบจัดการสิทธิ์ผู้ใช้งาน (User Management) และระบบจัดอันดับมือถือยอดนิยม
+ - ซึ่งจากผลการทดสอบพบว่าฟังก์ชันพื้นฐานของระบบส่วนใหญ่ สามารถทำงานได้ตามที่ออกแบบไว้ได้อย่างสมบูรณ์ ไม่พบข้อผิดพลาดในกระบวนการสำคัญ เช่น ระบบตะกร้าสินค้า การสั่งซื้อ การชำระเงิน และการจัดการข้อมูลสินค้า อย่างไรก็ตาม ยังคงพบข้อผิดพลาดในฟังก์ชันบางส่วน ได้แก่ ระบบจัดการสิทธิ์ผู้ใช้งาน (User Management)
 ---
 ### ตารางสรุปปัญหาที่พบ
-อ้างอิงจากผลการทดสอบเฉพาะรายการที่ไม่ผ่าน (UAT-C08 และ UAT-A01)
+อ้างอิงจากผลการทดสอบเฉพาะรายการที่ไม่ผ่าน (UAT-A01)
 
 | Issue ID | รายละเอียดปัญหา | ประเภทของปัญหา | ระดับความสำคัญ |
 | :---: | :--- | :--- | :---: |
-| ISS-001 | **(UAT-C08)** ระบบยังไม่สามารถดึงข้อมูลยอดขายจริงมาคำนวณเพื่อจัดอันดับได้อย่างถูกต้อง | ระบบทำงานไม่ตรงตามความต้องการ <br>และ ปัญหาเกี่ยวกับข้อมูล | High |
 | ISS-002 | **(UAT-A01)** แอดมินยังไม่สามารถเปลี่ยนสิทธิ์ (Role) หรือระงับบัญชีผู้ใช้งานได้ | ระบบทำงานไม่ตรงตามความต้องการ <br>และ ปัญหาเกี่ยวกับข้อมูล | High |
