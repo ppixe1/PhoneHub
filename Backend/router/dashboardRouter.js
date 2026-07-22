@@ -36,7 +36,6 @@ router.get('/', (req, res) => {
 
   db.query('SELECT * FROM orders', (err, result1) => {
     if (err) return res.status(500).json({ msg: 'Server Error' });
-    
 
     const filteredData = result1.filter((order) => {
       if (!order.created_at) return false;
@@ -58,15 +57,12 @@ router.get('/', (req, res) => {
       if (err) return res.status(500).json({ msg: 'Server Error' });
 
       const totalView = result2.reduce((total, product) => total + Number(product.view_count), 0);
-      
-      const validOrderIds = filteredData.map((order) => order.id)
+      const validOrderIds = filteredData.map((order) => order.id);
 
-      db.query('SELECT * FROM orderitems WHERE order_id IN (?)', [validOrderIds], (err, result3) => {
-        if (err) return res.status(500).json({ msg: 'Server Error' });
-
+      const processAndSendResponse = (orderItems) => {
         const salesByProduct = {};
 
-        result3.forEach((item) => {
+        orderItems.forEach((item) => {
           const productId = item.product_id;
           const qty = Number(item.quantity || 1);
           const price = Number(item.price_at_purchase || 0);
@@ -80,21 +76,21 @@ router.get('/', (req, res) => {
         });
 
         const topProductsList = result2
-        .map((product) => {
-          const periodSales = salesByProduct[product.id] || { soldQuantity: 0, totalSales: 0 };
-          return {
-            productId: product.id,
-            name: `${product.brand} ${product.model}`,
-            soldQuantity: periodSales.soldQuantity,
-            totalSales: periodSales.totalSales,
-          }
-        })
-        .filter((product) => product.soldQuantity > 0)
-        .sort((a, b) => b.soldQuantity - a.soldQuantity)
-        .slice(0, 3)
-        .map((product, index) => ({ rank: index + 1, ...product }))
+          .map((product) => {
+            const periodSales = salesByProduct[product.id] || { soldQuantity: 0, totalSales: 0 };
+            return {
+              productId: product.id,
+              name: `${product.brand} ${product.model}`,
+              soldQuantity: periodSales.soldQuantity,
+              totalSales: periodSales.totalSales,
+            };
+          })
+          .filter((product) => product.soldQuantity > 0)
+          .sort((a, b) => b.soldQuantity - a.soldQuantity)
+          .slice(0, 3)
+          .map((product, index) => ({ rank: index + 1, ...product }));
 
-        res.status(200).json({
+        return res.status(200).json({
           totalOrders,
           totalPrice,
           newOrders,
@@ -104,10 +100,20 @@ router.get('/', (req, res) => {
           completedOrders,
           canceledOrders,
           totalView,
-          topProductsList
-        })
-      })
-    })
+          topProductsList,
+        });
+      };
+
+      if (validOrderIds.length === 0) {
+        return processAndSendResponse([]);
+      }
+
+      db.query('SELECT * FROM orderitems WHERE order_id IN (?)', [validOrderIds], (err, result3) => {
+        if (err) return res.status(500).json({ msg: 'Server Error' });
+
+        processAndSendResponse(result3);
+      });
+    });
   });
 });
 

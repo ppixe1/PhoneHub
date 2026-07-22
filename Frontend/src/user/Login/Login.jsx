@@ -128,7 +128,7 @@ export default function Auth() {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '14px', marginBottom: '8px' }}>ชื่อ-นามสกุล</label>
+                <label style={{ display: 'block', fontSize: '14px', marginBottom: '8px' }}>ชื่อจริง-นามสกุล</label>
                 <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} required style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }} />
               </div>
               <div>
@@ -148,9 +148,9 @@ export default function Auth() {
               <label style={{ display: 'block', fontSize: '14px', marginBottom: '8px' }}>รหัสผ่าน</label>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required style={{ width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '4px', boxSizing: 'border-box' }} />
               <div style={{ textAlign: 'right', marginTop: '8px' }}>
-                <span onClick={() => { setIsForgotPassword(true); setIsLogin(false); }} style={{ fontSize: '13px', color: theme.primary, cursor: 'pointer', textDecoration: 'underline' }}>
+                {/* <span onClick={() => { setIsForgotPassword(true); setIsLogin(false); }} style={{ fontSize: '13px', color: theme.primary, cursor: 'pointer', textDecoration: 'underline' }}>
                   ลืมรหัสผ่าน?
-                </span>
+                </span> */}
               </div>
             </div>
           )}

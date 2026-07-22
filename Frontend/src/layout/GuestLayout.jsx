@@ -1,12 +1,9 @@
-import { Route, Routes } from 'react-router-dom';
-import Login from '../user/Login/Login'
+import Guest from '../user/Guest/Guest'
 
 const GuestLayout = () => {
   return ( 
     <>
-      {/* <h1>Guest Layout</h1> */}
-
-      <Login />
+      <Guest />
     </>
   );
 }

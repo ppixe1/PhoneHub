@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { jwtDecode } from 'jwt-decode';
+import { toast } from 'sonner';
 
 // LAYOUT
 import UserLayout from '../layout/UserLayout'
 import AdminLayout from '../layout/AdminLayout'
-import ManagerLayout from '../layout/ManagerLayout'
+// import ManagerLayout from '../layout/ManagerLayout'
 
 const HomeLayout = () => {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ const HomeLayout = () => {
   const getUserData = async () => {
     try {
       const token = sessionStorage.getItem('token');
-      if (!token) return alert('คุณไม่มี Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง')
+      if (!token) return toast.error('คุณไม่มี Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง')
 
       const data = jwtDecode(token)
       
@@ -43,7 +44,7 @@ const HomeLayout = () => {
   <>
     {role === 'user' && <UserLayout />}
     {role === 'admin' && <AdminLayout />}
-    {role === 'manager' && <ManagerLayout />}
+    {/* {role === 'manager' && <ManagerLayout />} */}
   </>
   );
 }

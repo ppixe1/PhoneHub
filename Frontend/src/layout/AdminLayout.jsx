@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import Navbar from '../AdminPage/component/Navbar';
-import TabMenu from '../AdminPage/component/TabMenu';
-import DashboardTab from '../AdminPage/Dashbord/DashboardTab';
-import InventoryTab from '../AdminPage/Inventory/InventoryTab';
-import OrdersManagementTap from '../AdminPage/OrdersManagement/OrdersManagementTap';
+import Navbar from '../adminPage/component/Navbar';
+import TabMenu from '../adminPage/component/TabMenu';
+import DashboardTab from '../adminPage/Dashbord/DashboardTab';
+import InventoryTab from '../adminPage/Inventory/InventoryTab';
+import OrdersManagementTap from '../adminPage/OrdersManagement/OrdersManagementTap';
+import UserManagement from '../adminPage/UserManagement/UserManagement';
 
 const AdminLayout = () => {
-    const [activeTab, setActiveTab] = useState("orders");
+    const [activeTab, setActiveTab] = useState("dashboard");
 
     return (
         <div className="d-flex flex-column" style={{ minHeight: '100vh', backgroundColor: '#FAFAFA', color: '#212529' }}>
@@ -19,6 +20,7 @@ const AdminLayout = () => {
         {activeTab === "dashboard" && <DashboardTab />}
         {activeTab === "inventory" && <InventoryTab />}
         {activeTab === "orders" && <OrdersManagementTap />}
+        {activeTab === "usermanagement" && <UserManagement />}
       </main>
     </div>
     );

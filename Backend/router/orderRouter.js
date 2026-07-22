@@ -112,90 +112,97 @@ router.post('/', (req, res) => {
 
   const formattedAddress = `${shippingAddress.fullName}, ${shippingAddress.phone}, ${shippingAddress.houseNo}, ${shippingAddress.subDistrict}, ${shippingAddress.district}, ${shippingAddress.province}, ${shippingAddress.postalCode}`;
 
-  const orderQuery = 'INSERT INTO orders (user_id, total_price, status, created_at, paid_at, shipping_address, customer_name, customer_phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
-  db.query(orderQuery,
-    [user_id, totalPrice, 'paid', createdAt, paidAt, formattedAddress, customerName, customerPhone], 
-    (err, result1) => {
-    if (err) return res.status(500).json({ msg: 'Server Error' });
+  db.query('UPDATE users SET address = ?, subdistrict = ?, district = ?, province = ?, postal_code = ? WHERE id = ?',
+    [shippingAddress.houseNo, shippingAddress.subDistrict, shippingAddress.district, shippingAddress.province, shippingAddress.postalCode, user_id],
+    (err, result) => {
+      if (err) return res.status(500).json({ msg: 'Server Error' });
 
-    const order_id = result1.insertId;
-
-    const orderItemsValue = items.map(item => [
-      order_id,
-      item.product_id,
-      item.quantity,
-      item.price,
-      item.brand,
-      `["${item.img}"]`,
-      item.model,
-      `[{"storage":"${item.storage}","color":"${item.color}"}]`
-    ]);
-
-    const orderItemsQuery = 'INSERT INTO orderitems (order_id, product_id, quantity, price_at_purchase, product_brand, product_img, product_model, variation) VALUES ?';
-    db.query(orderItemsQuery, [orderItemsValue],
-      (err, result2) => {
+      const orderQuery = 'INSERT INTO orders (user_id, total_price, status, created_at, paid_at, shipping_address, customer_name, customer_phone) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+      db.query(orderQuery,
+        [user_id, totalPrice, 'paid', createdAt, paidAt, formattedAddress, customerName, customerPhone], 
+        (err, result1) => {
         if (err) return res.status(500).json({ msg: 'Server Error' });
-        
-        const orderItemsPurchase = items.map(item => [item.id])
-        const orderItemsPurchaseQuery = 'DELETE FROM cartitems WHERE id IN (?)';
 
-        db.query(orderItemsPurchaseQuery, [orderItemsPurchase],
-          (err, result3) => {
+        const order_id = result1.insertId;
+
+        const orderItemsValue = items.map(item => [
+          order_id,
+          item.product_id,
+          item.quantity,
+          item.price,
+          item.brand,
+          `["${item.img}"]`,
+          item.model,
+          `[{"storage":"${item.storage}","color":"${item.color}"}]`
+        ]);
+
+        const orderItemsQuery = 'INSERT INTO orderitems (order_id, product_id, quantity, price_at_purchase, product_brand, product_img, product_model, variation) VALUES ?';
+        db.query(orderItemsQuery, [orderItemsValue],
+          (err, result2) => {
             if (err) return res.status(500).json({ msg: 'Server Error' });
+            
+            const orderItemsPurchase = items.map(item => [item.id])
+            const orderItemsPurchaseQuery = 'DELETE FROM cartitems WHERE id IN (?)';
 
-            const updateStockPromises = items.map((item) => {
-              return new Promise((resolve, reject) => {
-                db.query('SELECT variation FROM products WHERE id = ?', [item.product_id], (err, rows) => {
-                  if (err || rows.length === 0) return reject(err || new Error('Product not found'));
+            db.query(orderItemsPurchaseQuery, [orderItemsPurchase],
+              (err, result3) => {
+                if (err) return res.status(500).json({ msg: 'Server Error' });
 
-                  let variations = [];
-                  try {
-                    variations = typeof rows[0].variation === 'string' 
-                      ? JSON.parse(rows[0].variation) 
-                      : rows[0].variation;
-                  } catch (e) {
-                    variations = [];
-                  }
+                const updateStockPromises = items.map((item) => {
+                  return new Promise((resolve, reject) => {
+                    db.query('SELECT variation FROM products WHERE id = ?', [item.product_id], (err, rows) => {
+                      if (err || rows.length === 0) return reject(err || new Error('Product not found'));
 
-                  let updated = false;
-                  variations = variations.map(v => {
-                    if (v.storage === item.storage && v.color === item.color) {
-                      const currentStock = Number(v.stock || 0);
-                      const buyQty = Number(item.quantity || 1);
-                      v.stock = Math.max(0, currentStock - buyQty);
-                      updated = true;
-                    }
-                    return v;
-                  });
+                      let variations = [];
+                      try {
+                        variations = typeof rows[0].variation === 'string' 
+                          ? JSON.parse(rows[0].variation) 
+                          : rows[0].variation;
+                      } catch (e) {
+                        variations = [];
+                      }
 
-                  const updateSql = `
-                    UPDATE products 
-                    SET sales_count = sales_count + ?, 
-                        variation = ? 
-                    WHERE id = ?
-                  `;
+                      let updated = false;
+                      variations = variations.map(v => {
+                        if (v.storage === item.storage && v.color === item.color) {
+                          const currentStock = Number(v.stock || 0);
+                          const buyQty = Number(item.quantity || 1);
+                          v.stock = Math.max(0, currentStock - buyQty);
+                          updated = true;
+                        }
+                        return v;
+                      });
 
-                  db.query(updateSql, [item.quantity, JSON.stringify(variations), item.product_id], (err, result) => {
-                    if (err) return reject(err);
-                    resolve(result);
+                      const updateSql = `
+                        UPDATE products 
+                        SET sales_count = sales_count + ?, 
+                            variation = ? 
+                        WHERE id = ?
+                      `;
+
+                      db.query(updateSql, [item.quantity, JSON.stringify(variations), item.product_id], (err, result) => {
+                        if (err) return reject(err);
+                        resolve(result);
+                      });
+                    });
                   });
                 });
-              });
-            });
 
-            Promise.all(updateStockPromises)
-            .then(() => {
-              return res.status(200).json({ msg: 'สั่งซื้อสินค้าสำเร็จ!' });
-            })
-            .catch((error) => {
-              console.error('Update Stock Error:', error);
-              return res.status(500).json({ msg: 'เกิดข้อผิดพลาดในการตัดสต็อก' });
-            });
-            }
-        )
-      }
-    );
-  })
+                Promise.all(updateStockPromises)
+                .then(() => {
+                  return res.status(200).json({ msg: 'สั่งซื้อสินค้าสำเร็จ!' });
+                })
+                .catch((error) => {
+                  console.error('Update Stock Error:', error);
+                  return res.status(500).json({ msg: 'เกิดข้อผิดพลาดในการตัดสต็อก' });
+                });
+                }
+            )
+          }
+        );
+      })
+    }
+  )
 })
 
 

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { jwtDecode } from 'jwt-decode';
 
 const theme = {
   primary: '#B00000',
@@ -29,6 +30,35 @@ export default function Payment() {
     province: '',
     postalCode: ''
   });
+
+  const getAddress = async () => {
+    const token = sessionStorage.getItem('token');
+    if (!token) return toast.error('คุณไม่มี Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง');
+
+    const data = jwtDecode(token);
+    const user_id = data.user_id;
+    try {
+      const res = await axios.get(`http://localhost:3000/auth/address/${user_id}`);
+      if (res.status === 200) {
+        setAddress(res.data);
+      }
+    } catch (error) {
+      if (error) {
+        console.log(error);
+      }
+    }
+  }
+
+  useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+      toast.error('คุณไม่มี Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง')
+      navigate('/login');
+      return;
+    };
+    
+    getAddress();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -128,7 +158,7 @@ export default function Payment() {
         
         {/* 1. ที่อยู่สำหรับจัดส่ง */}
         <div style={{ backgroundColor: '#ffffff', padding: '20px', marginBottom: '20px', borderRadius: '4px', border: '1px solid #eee' }}>
-          <h3 style={{ fontSize: '16px', fontWeight: '600', margin: '0 0 15px 0', fontFamily: theme.fontFamily }}>ที่อยู่ในการจัดส่ง</h3>
+          <h3 className='mb-2' style={{ fontSize: '16px', fontWeight: '600', margin: '0 0 15px 0', fontFamily: theme.fontFamily }}>ที่อยู่ในการจัดส่ง</h3>
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
             <div>

@@ -96,6 +96,13 @@ function OrderTracking() {
   }
 
   useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+      toast.error('คุณไม่มี Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง')
+      navigate('/login');
+      return;
+    };
+
     getOrders();
   }, []);
 

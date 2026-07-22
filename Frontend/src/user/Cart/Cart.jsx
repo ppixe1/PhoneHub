@@ -41,6 +41,13 @@ export default function Cart() {
   
   // ดึงข้อมูลตะกร้าสินค้าตอนเปิดหน้านี้ครั้งแรก (ดึง quantity ของแต่ละชิ้นมาจาก DB)
   useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+      toast.error('คุณไม่มี Token กรุณาเข้าสู่ระบบใหม่อีกครั้ง')
+      navigate('/login');
+      return;
+    };
+
     const fetchCartData = async () => {
       setIsLoading(true);
       try {

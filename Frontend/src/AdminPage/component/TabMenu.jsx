@@ -1,10 +1,11 @@
-import { LayoutDashboard, Package, ShoppingCart } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Users } from 'lucide-react';
 
 export default function TabMenu({ activeTab, setActiveTab }) {
   const tabs = [
     { id: "dashboard", label: "แดชบอร์ดสรุปผล", icon: <LayoutDashboard style={{ width: '16px', height: '16px' }} /> },
     { id: "inventory", label: "จัดการคลังสินค้า (Inventory)", icon: <Package style={{ width: '16px', height: '16px' }} /> },
     { id: "orders", label: "จัดการคำสั่งซื้อ (Orders)", icon: <ShoppingCart style={{ width: '16px', height: '16px' }} /> },
+    { id: "usermanagement", label: "จัดการผู้ใช้ (Users)", icon: <Users style={{ width: '16px', height: '16px' }} /> },
   ];
 
   return (
