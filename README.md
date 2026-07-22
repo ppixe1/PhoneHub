@@ -173,7 +173,7 @@
 ## 11.Class Diagram
 แสดงโครงสร้างของระบบ PhoneHub รวมถึงแอตทริบิวต์ (Attributes), เมธอด (Methods) และความสัมพันธ์ระหว่างคลาส:
 
-<img src"https://media.discordapp.net/attachments/1339783101164945500/1529346872366469262/Class-D-PhoneHub.drawio.png?ex=6a619ac4&is=6a604944&hm=8a195acd6e0106af60e08d1b621b2c876837a0ee3a2de595f899192c7c8a31c7&=&format=webp&quality=lossless" />
+<img width="721" height="889" alt="image" src="https://media.discordapp.net/attachments/1339783101164945500/1529346872366469262/Class-D-PhoneHub.drawio.png?ex=6a619ac4&is=6a604944&hm=8a195acd6e0106af60e08d1b621b2c876837a0ee3a2de595f899192c7c8a31c7&=&format=webp&quality=lossless" />
 
 ---
 <a id="sequence"></a>
