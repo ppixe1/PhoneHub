@@ -19,62 +19,31 @@
 CREATE DATABASE IF NOT EXISTS `phonehub` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci */;
 USE `phonehub`;
 
--- Dumping structure for table phonehub.cartitems
-CREATE TABLE IF NOT EXISTS `cartitems` (
+
+-- Dumping structure for table phonehub.users
+CREATE TABLE IF NOT EXISTS `users` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `user_id` int(11) NOT NULL,
-  `product_id` int(11) NOT NULL,
-  `quantity` int(11) NOT NULL,
-  `color` varchar(50) NOT NULL,
-  `storage` varchar(50) NOT NULL,
-  `price` varchar(50) NOT NULL,
-  `brand` varchar(50) NOT NULL,
-  `model` varchar(50) NOT NULL,
-  `img` varchar(255) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `FK_cartitem_product_id` (`product_id`),
-  KEY `FK_cartitem_user_id` (`user_id`),
-  CONSTRAINT `FK_cartitem_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE NO ACTION,
-  CONSTRAINT `FK_cartitem_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+  `username` varchar(50) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `role` enum('user','admin','manager') NOT NULL DEFAULT 'user',
+  `name` varchar(50) NOT NULL,
+  `email` varchar(50) NOT NULL,
+  `phone` varchar(10) NOT NULL,
+  `address` varchar(50) NOT NULL,
+  `subdistrict` varchar(50) NOT NULL,
+  `district` varchar(50) NOT NULL,
+  `province` varchar(20) NOT NULL,
+  `postal_code` varchar(6) NOT NULL,
+  `deleted` int(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Dumping data for table phonehub.cartitems: ~6 rows (approximately)
-REPLACE INTO `cartitems` (`id`, `user_id`, `product_id`, `quantity`, `color`, `storage`, `price`, `brand`, `model`, `img`) VALUES
-	(11, 2, 2, 2, 'Silver', '1TB', '64900', 'Apple', 'iPhone 17 Pro Max', 'https://media-cdn.bnn.in.th/533314/iPhone_17_Pro_Max_01-square_medium.jpg'),
-	(17, 2, 4, 1, 'Pearl White', '512GB', '39999', 'OPPO', 'Find X8 Pro', 'https://www.iphone-droid.net/wp-content/uploads/2024/10/oppo-find-x8-series-official-renders-leaked-1.png'),
-	(18, 2, 4, 2, 'Space Black', '512GB', '39999', 'OPPO', 'Find X8 Pro', 'https://www.iphone-droid.net/wp-content/uploads/2024/10/oppo-find-x8-series-official-renders-leaked-1.png'),
-	(20, 3, 2, 1, 'Cosmic Orange', '2TB', '80900', 'Apple', 'iPhone 17 Pro Max', 'https://media-cdn.bnn.in.th/533314/iPhone_17_Pro_Max_01-square_medium.jpg'),
-	(21, 3, 3, 1, 'Titanium Black', '1TB', '66900', 'Samsung', 'Galaxy S26 Ultra', 'https://shop.samsung.com/ie/images/products/30442/38429/2000x2000/M3DA512.webp'),
-	(26, 4, 2, 1, 'Cosmic Orange', '2TB', '80900', 'Apple', 'iPhone 17 Pro Max', 'https://media-cdn.bnn.in.th/533314/iPhone_17_Pro_Max_01-square_medium.jpg');
-
--- Dumping structure for table phonehub.orderitems
-CREATE TABLE IF NOT EXISTS `orderitems` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `order_id` int(11) NOT NULL,
-  `product_id` int(11) NOT NULL,
-  `quantity` int(11) NOT NULL DEFAULT 1,
-  `price_at_purchase` int(11) NOT NULL DEFAULT 1,
-  `product_brand` varchar(50) NOT NULL,
-  `product_img` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`product_img`)),
-  `product_model` varchar(255) NOT NULL,
-  `variation` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`variation`)),
-  PRIMARY KEY (`id`),
-  KEY `FK_orderitems_orders_id` (`order_id`),
-  KEY `FK_orderitem_products_id` (`product_id`),
-  CONSTRAINT `FK_orderitem_products_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE NO ACTION,
-  CONSTRAINT `FK_orderitems_orders_id` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Dumping data for table phonehub.orderitems: ~7 rows (approximately)
-REPLACE INTO `orderitems` (`id`, `order_id`, `product_id`, `quantity`, `price_at_purchase`, `product_brand`, `product_img`, `product_model`, `variation`) VALUES
-	(3, 12, 2, 1, 80900, 'Apple', '["https://media-cdn.bnn.in.th/533314/iPhone_17_Pro_Max_01-square_medium.jpg"]', 'iPhone 17 Pro Max', '[{"storage":"2TB","color":"Cosmic Orange"}]'),
-	(4, 13, 3, 1, 46900, 'Samsung', '["https://shop.samsung.com/ie/images/products/30442/38429/2000x2000/M3DA512.webp"]', 'Galaxy S26 Ultra', '[{"storage":"256GB","color":"Titanium Black"}]'),
-	(5, 13, 5, 1, 39999, 'Vivo', '["https://asia-exstatic-vivofs.vivo.com/PSee2l50xoirPK7y/1737463542993/627ab294bbc01131e749e3ef788de1f7.png"]', 'X200 Pro', '[{"storage":"512GB","color":"Titanium Gray"}]'),
-	(6, 14, 2, 1, 56900, 'Apple', '["https://media-cdn.bnn.in.th/533314/iPhone_17_Pro_Max_01-square_medium.jpg"]', 'iPhone 17 Pro Max', '[{"storage":"512GB","color":"Cosmic Orange"}]'),
-	(7, 15, 3, 1, 66900, 'Samsung', '["https://shop.samsung.com/ie/images/products/30442/38429/2000x2000/M3DA512.webp"]', 'Galaxy S26 Ultra', '[{"storage":"1TB","color":"Titanium Silver"}]'),
-	(8, 16, 19, 1, 52900, 'Samsung', '["https://media-cdn.bnn.in.th/363371/Samsung--Galaxy-S24-ULTRA--TITANIUM-5G-8-square_medium.jpg"]', 'Galaxy S24 Ultra', '[{"storage":"512GB","color":"Titanium Violet"}]'),
-	(9, 17, 30, 1, 37500, 'Apple', '["https://media-cdn.bnn.in.th/533218/iPhone_17_Lavender_-01-square_medium.jpg"]', 'iPhone 17', '[{"storage":"512GB","color":"Lavender"}]'),
-	(10, 18, 21, 2, 42900, 'Samsung', '["https://images.samsung.com/is/image/samsung/p6pim/th/sm-f741blgathl/gallery/th-galaxy-zflip6-f741-513544-sm-f741blgathl-542920448?imbypass=true"]', 'Galaxy Z Flip 6', '[{"storage":"512GB","color":"Blue"}]');
+-- Dumping data for table phonehub.users: ~4 rows (approximately)
+REPLACE INTO `users` (`id`, `username`, `password`, `role`, `name`, `email`, `phone`, `address`, `subdistrict`, `district`, `province`, `postal_code`, `deleted`) VALUES
+	(1, 'Pixe1', '$2b$10$7C51tpWBlgIYUTEONJ1bcOc6ZHXhzQmIpQ.PT5v94yD', 'user', 'sunshine sabyedee', 'thunder2xx1@gmail.com', '0999999999', '', '', '', '', '', 0),
+	(2, 'Pixel', '$2b$10$nzZH/fmOu0ZwI1fv/2IfpefMgd3n2CUA47v1vnpyNH77tEWf/fJ.K', 'admin', 'sunshine sabyedee', 'thunder2xx1@gmail.com', '0999999999', '', '', '', '', '', 0),
+	(3, 'Sunshine', '$2b$10$X5GDow0oXoZigtfwppJMe.TUQWOG/P3SN9d0Eh9J6VVUTIrdJO/eW', 'user', 'Sunshine Sunjai', 'sunshine@gmail.com', '0444444444', '123/4 หมู่5 ถนนพหลโยธิน', 'อนุเสาวรีย์', 'บางเขน', 'กรุงเทพมหานคร', '10220', 0),
+	(4, 'Fear', '$2b$10$.UMvJHQuAsbZiT7Gcaijluje1n7x4A647HChtw7mY2bF8kWSYJS0S', 'user', 'Fear JuJuu', 'fear@example.com', '0222222222', '181/4 หมู่ที่6 ซอยนาแก ถนนพหลโยธิน', 'อนุเสาวรีย์', 'บางเขน', 'กรุงเทพมหานคร', '10220', 0);
 
 -- Dumping structure for table phonehub.orders
 CREATE TABLE IF NOT EXISTS `orders` (
@@ -196,33 +165,67 @@ REPLACE INTO `products` (`id`, `brand`, `model`, `variation`, `img`, `specificat
 	(58, 'Xiaomi', 'Xiaomi 14T Pro', '[{"storage":"12GB + 256GB","color":"Titan Gray","stock":"10","price":"19990"},{"storage":"12GB + 256GB","color":"Titan Blue","stock":"10","price":"19990"},{"storage":"12GB + 512GB","color":"Titan Gray","stock":"10","price":"21990"},{"storage":"12GB + 512GB","color":"Titan Blue","stock":"10","price":"21990"},{"storage":"16GB + 1TB","color":"Titan Gray","stock":"10","price":"25990"},{"storage":"16GB + 1TB","color":"Titan Blue","stock":"10","price":"25990"}]', '["https://media-cdn.bnn.in.th/431571/Xiaomi-14T-Pro-Titan-Black-5G-1-square_medium.jpg","https://media-cdn.bnn.in.th/431570/Xiaomi-14T-Pro-Titan-Black-5G-2-square_medium.jpg","https://media-cdn.bnn.in.th/431569/Xiaomi-14T-Pro-Titan-Black-5G-3-square_medium.jpg","https://media-cdn.bnn.in.th/431566/Xiaomi-14T-Pro-Titan-Black-5G-6-square_medium.jpg"]', '{"screenSize":"6.67 นิ้ว","screenType":"AMOLED CrystalRes Display","refreshRate":"144Hz","chipset":"MediaTek Dimensity 9300+","backCamera":"กล้องหลัก 50MP (Leica) + Telephoto 50MP + Ultra-wide 12MP","frontCamera":"32MP","batteryLife":"5000mAh","fastCharge":"รองรับชาร์จไว 120W HyperCharge และชาร์จไร้สาย 50W","os":"Xiaomi HyperOS","connections":"USB-C, 5G, Wi-Fi 7, Bluetooth 5.4, NFC","highlights":"ระบบกล้อง Leica คุณภาพสูง, ประสิทธิภาพเรือธงด้วยชิป Dimensity 9300+, มาตรฐานกันน้ำกันฝุ่น IP68"}', 0, 0),
 	(59, 'Xiaomi', 'Xiaomi 14', '[{"storage":"12GB + 256GB","color":"Black","stock":"10","price":"24990"},{"storage":"12GB + 256GB","color":"White","stock":"10","price":"24990"},{"storage":"12GB + 256GB","color":"Jade Green","stock":"10","price":"24990"},{"storage":"12GB + 512GB","color":"Black","stock":"10","price":"27990"},{"storage":"12GB + 512GB","color":"White","stock":"10","price":"27990"},{"storage":"12GB + 512GB","color":"Jade Green","stock":"10","price":"27990"}]', '["https://media-cdn.bnn.in.th/380653/Xiaomi-14-Jade-Green-1-square_medium.jpg","https://media-cdn.bnn.in.th/380654/Xiaomi-14-Jade-Green-2-square_medium.jpg","https://media-cdn.bnn.in.th/380655/Xiaomi-14-Jade-Green-3-square_medium.jpg","https://media-cdn.bnn.in.th/380656/Xiaomi-14-Jade-Green-4-square_medium.jpg"]', '{"screenSize":"6.36 นิ้ว","screenType":"LTPO OLED (CrystalRes)","refreshRate":"1-120Hz","chipset":"Snapdragon 8 Gen 3","backCamera":"ชุดกล้อง Leica 3 เลนส์ (หลัก 50MP OIS + Telephoto 50MP + Ultra-wide 50MP)","frontCamera":"32MP","batteryLife":"4610mAh","fastCharge":"รองรับชาร์จไว 90W HyperCharge และชาร์จไร้สาย 50W","os":"Xiaomi HyperOS","connections":"USB-C, 5G, Wi-Fi 7, Bluetooth 5.4, NFC","highlights":"ขนาดกะทัดรัดพรีเมียม, ประสิทธิภาพระดับเรือธง Snapdragon 8 Gen 3, กล้อง Leica ที่ยอดเยี่ยม"}', 0, 0);
 
--- Dumping structure for table phonehub.users
-CREATE TABLE IF NOT EXISTS `users` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `username` varchar(50) NOT NULL,
-  `password` varchar(255) NOT NULL,
-  `role` enum('user','admin','manager') NOT NULL DEFAULT 'user',
-  `name` varchar(50) NOT NULL,
-  `email` varchar(50) NOT NULL,
-  `phone` varchar(10) NOT NULL,
-  `address` varchar(50) NOT NULL,
-  `subdistrict` varchar(50) NOT NULL,
-  `district` varchar(50) NOT NULL,
-  `province` varchar(20) NOT NULL,
-  `postal_code` varchar(6) NOT NULL,
-  `deleted` int(1) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- Dumping data for table phonehub.users: ~4 rows (approximately)
-REPLACE INTO `users` (`id`, `username`, `password`, `role`, `name`, `email`, `phone`, `address`, `subdistrict`, `district`, `province`, `postal_code`, `deleted`) VALUES
-	(1, 'Pixe1', '$2b$10$7C51tpWBlgIYUTEONJ1bcOc6ZHXhzQmIpQ.PT5v94yD', 'user', 'sunshine sabyedee', 'thunder2xx1@gmail.com', '0999999999', '', '', '', '', '', 0),
-	(2, 'Pixel', '$2b$10$nzZH/fmOu0ZwI1fv/2IfpefMgd3n2CUA47v1vnpyNH77tEWf/fJ.K', 'admin', 'sunshine sabyedee', 'thunder2xx1@gmail.com', '0999999999', '', '', '', '', '', 0),
-	(3, 'Sunshine', '$2b$10$X5GDow0oXoZigtfwppJMe.TUQWOG/P3SN9d0Eh9J6VVUTIrdJO/eW', 'user', 'Sunshine Sunjai', 'sunshine@gmail.com', '0444444444', '123/4 หมู่5 ถนนพหลโยธิน', 'อนุเสาวรีย์', 'บางเขน', 'กรุงเทพมหานคร', '10220', 0),
-	(4, 'Fear', '$2b$10$.UMvJHQuAsbZiT7Gcaijluje1n7x4A647HChtw7mY2bF8kWSYJS0S', 'user', 'Fear JuJuu', 'fear@example.com', '0222222222', '181/4 หมู่ที่6 ซอยนาแก ถนนพหลโยธิน', 'อนุเสาวรีย์', 'บางเขน', 'กรุงเทพมหานคร', '10220', 0);
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
 /*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40111 SET SQL_NOTES=IFNULL(@OLD_SQL_NOTES, 1) */;
+
+-- Dumping structure for table phonehub.orderitems
+CREATE TABLE IF NOT EXISTS `orderitems` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `order_id` int(11) NOT NULL,
+  `product_id` int(11) NOT NULL,
+  `quantity` int(11) NOT NULL DEFAULT 1,
+  `price_at_purchase` int(11) NOT NULL DEFAULT 1,
+  `product_brand` varchar(50) NOT NULL,
+  `product_img` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`product_img`)),
+  `product_model` varchar(255) NOT NULL,
+  `variation` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`variation`)),
+  PRIMARY KEY (`id`),
+  KEY `FK_orderitems_orders_id` (`order_id`),
+  KEY `FK_orderitem_products_id` (`product_id`),
+  CONSTRAINT `FK_orderitem_products_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE NO ACTION,
+  CONSTRAINT `FK_orderitems_orders_id` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE NO ACTION
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table phonehub.orderitems: ~7 rows (approximately)
+REPLACE INTO `orderitems` (`id`, `order_id`, `product_id`, `quantity`, `price_at_purchase`, `product_brand`, `product_img`, `product_model`, `variation`) VALUES
+	(3, 12, 2, 1, 80900, 'Apple', '["https://media-cdn.bnn.in.th/533314/iPhone_17_Pro_Max_01-square_medium.jpg"]', 'iPhone 17 Pro Max', '[{"storage":"2TB","color":"Cosmic Orange"}]'),
+	(4, 13, 3, 1, 46900, 'Samsung', '["https://shop.samsung.com/ie/images/products/30442/38429/2000x2000/M3DA512.webp"]', 'Galaxy S26 Ultra', '[{"storage":"256GB","color":"Titanium Black"}]'),
+	(5, 13, 5, 1, 39999, 'Vivo', '["https://asia-exstatic-vivofs.vivo.com/PSee2l50xoirPK7y/1737463542993/627ab294bbc01131e749e3ef788de1f7.png"]', 'X200 Pro', '[{"storage":"512GB","color":"Titanium Gray"}]'),
+	(6, 14, 2, 1, 56900, 'Apple', '["https://media-cdn.bnn.in.th/533314/iPhone_17_Pro_Max_01-square_medium.jpg"]', 'iPhone 17 Pro Max', '[{"storage":"512GB","color":"Cosmic Orange"}]'),
+	(7, 15, 3, 1, 66900, 'Samsung', '["https://shop.samsung.com/ie/images/products/30442/38429/2000x2000/M3DA512.webp"]', 'Galaxy S26 Ultra', '[{"storage":"1TB","color":"Titanium Silver"}]'),
+	(8, 16, 19, 1, 52900, 'Samsung', '["https://media-cdn.bnn.in.th/363371/Samsung--Galaxy-S24-ULTRA--TITANIUM-5G-8-square_medium.jpg"]', 'Galaxy S24 Ultra', '[{"storage":"512GB","color":"Titanium Violet"}]'),
+	(9, 17, 30, 1, 37500, 'Apple', '["https://media-cdn.bnn.in.th/533218/iPhone_17_Lavender_-01-square_medium.jpg"]', 'iPhone 17', '[{"storage":"512GB","color":"Lavender"}]'),
+	(10, 18, 21, 2, 42900, 'Samsung', '["https://images.samsung.com/is/image/samsung/p6pim/th/sm-f741blgathl/gallery/th-galaxy-zflip6-f741-513544-sm-f741blgathl-542920448?imbypass=true"]', 'Galaxy Z Flip 6', '[{"storage":"512GB","color":"Blue"}]');
+
+-- Dumping structure for table phonehub.cartitems
+CREATE TABLE IF NOT EXISTS `cartitems` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `product_id` int(11) NOT NULL,
+  `quantity` int(11) NOT NULL,
+  `color` varchar(50) NOT NULL,
+  `storage` varchar(50) NOT NULL,
+  `price` varchar(50) NOT NULL,
+  `brand` varchar(50) NOT NULL,
+  `model` varchar(50) NOT NULL,
+  `img` varchar(255) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FK_cartitem_product_id` (`product_id`),
+  KEY `FK_cartitem_user_id` (`user_id`),
+  CONSTRAINT `FK_cartitem_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE NO ACTION,
+  CONSTRAINT `FK_cartitem_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE NO ACTION
+) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Dumping data for table phonehub.cartitems: ~6 rows (approximately)
+REPLACE INTO `cartitems` (`id`, `user_id`, `product_id`, `quantity`, `color`, `storage`, `price`, `brand`, `model`, `img`) VALUES
+	(11, 2, 2, 2, 'Silver', '1TB', '64900', 'Apple', 'iPhone 17 Pro Max', 'https://media-cdn.bnn.in.th/533314/iPhone_17_Pro_Max_01-square_medium.jpg'),
+	(17, 2, 4, 1, 'Pearl White', '512GB', '39999', 'OPPO', 'Find X8 Pro', 'https://www.iphone-droid.net/wp-content/uploads/2024/10/oppo-find-x8-series-official-renders-leaked-1.png'),
+	(18, 2, 4, 2, 'Space Black', '512GB', '39999', 'OPPO', 'Find X8 Pro', 'https://www.iphone-droid.net/wp-content/uploads/2024/10/oppo-find-x8-series-official-renders-leaked-1.png'),
+	(20, 3, 2, 1, 'Cosmic Orange', '2TB', '80900', 'Apple', 'iPhone 17 Pro Max', 'https://media-cdn.bnn.in.th/533314/iPhone_17_Pro_Max_01-square_medium.jpg'),
+	(21, 3, 3, 1, 'Titanium Black', '1TB', '66900', 'Samsung', 'Galaxy S26 Ultra', 'https://shop.samsung.com/ie/images/products/30442/38429/2000x2000/M3DA512.webp'),
+	(26, 4, 2, 1, 'Cosmic Orange', '2TB', '80900', 'Apple', 'iPhone 17 Pro Max', 'https://media-cdn.bnn.in.th/533314/iPhone_17_Pro_Max_01-square_medium.jpg');
+
